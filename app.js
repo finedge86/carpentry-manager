@@ -433,4 +433,53 @@ if('serviceWorker' in navigator) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// ── EXPORT / IMPORT DATA ─────────────────────────────────────────────────────
+function exportData() {
+  const json = JSON.stringify(DB, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'alnajjar-backup-' + TODAY + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        Object.assign(DB, parsed);
+        persist();
+        renderDash();
+        alert('✅ Data imported successfully! All your data is now loaded.');
+      } catch(err) {
+        alert('❌ Error reading file. Make sure it is a valid backup file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Add export/import buttons to the page
+document.addEventListener('DOMContentLoaded', () => {
+  const toolbar = document.createElement('div');
+  toolbar.style.cssText = 'position:fixed;bottom:16px;right:16px;display:flex;gap:8px;z-index:500';
+  toolbar.innerHTML = `
+    <button onclick="exportData()" style="padding:8px 14px;border-radius:8px;background:#1D9E75;color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,0.15)">⬇ Export data</button>
+    <button onclick="importData()" style="padding:8px 14px;border-radius:8px;background:#185FA5;color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,0.15)">⬆ Import data</button>
+  `;
+  document.body.appendChild(toolbar);
+});
+
+window.exportData = exportData;
+window.importData = importData;
 renderDash();
