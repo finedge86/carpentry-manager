@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#1D9E75"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Al-Najjar"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>Al-Najjar Carpentry Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f5f5f4;
+  --color-background-tertiary:#f0f0ef;
+  --color-text-primary:#1c1917;
+  --color-text-secondary:#57534e;
+  --color-text-tertiary:#a8a29e;
+  --color-border-primary:#d6d3d1;
+  --color-border-secondary:#e7e5e4;
+  --color-border-tertiary:#f5f5f4;
+  --font-sans:'DM Sans',system-ui,sans-serif;
+  --border-radius-md:8px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --color-background-primary:#1c1917;
+    --color-background-secondary:#292524;
+    --color-background-tertiary:#1a1917;
+    --color-text-primary:#fafaf9;
+    --color-text-secondary:#a8a29e;
+    --color-text-tertiary:#57534e;
+    --color-border-primary:#44403c;
+    --color-border-secondary:#292524;
+    --color-border-tertiary:#1c1917;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',var(--font-sans);background:var(--color-background-tertiary);min-height:100vh;min-height:100dvh}
+
+/* PWA install banner */
+#install-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#1D9E75;color:#fff;padding:12px 16px;z-index:1000;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+#install-banner.show{display:flex}
+#install-banner button{background:#fff;color:#1D9E75;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer}
+#install-banner .dismiss{background:transparent;color:rgba(255,255,255,0.7);font-size:18px;padding:2px 8px}
+
+.app{display:flex;min-height:100vh;min-height:100dvh}
+.sidebar{width:215px;flex-shrink:0;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:1.5rem 0;overflow-y:auto;position:sticky;top:0;height:100vh;height:100dvh}
+.logo{padding:0 1.25rem 1.25rem;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1rem}
+.logo-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--color-text-primary)}
+.logo-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:2px}
+.nav-group{font-size:10px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.6px;padding:0.75rem 1.25rem 0.25rem}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 1.25rem;font-size:13px;cursor:pointer;color:var(--color-text-secondary);border-left:2px solid transparent;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.nav-item:hover,.nav-item:active{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.nav-item.active{color:#1D9E75;border-left:2px solid #1D9E75;background:rgba(29,158,117,0.06);font-weight:500}
+.main{flex:1;overflow:auto;padding:1.5rem}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
+.page-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--color-text-primary)}
+.page-sub{font-size:13px;color:var(--color-text-secondary);margin-top:3px}
+.btn{padding:7px 14px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-size:13px;font-family:'DM Sans',var(--font-sans);-webkit-tap-highlight-color:transparent}
+.btn:hover,.btn:active{background:var(--color-background-secondary)}
+.btn-primary{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.btn-primary:hover,.btn-primary:active{background:#0F6E56}
+.btn-in{background:#E1F5EE;color:#0F6E56;border-color:#A8DFC8}
+.btn-out{background:#FAECE7;color:#993C1D;border-color:#F0B8A5}
+.btn-danger{color:#D85A30;border-color:transparent;background:none;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',var(--font-sans);border-radius:6px}
+.btn-edit{color:#185FA5;border-color:transparent;background:none;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',var(--font-sans);border-radius:6px}
+.btn-sm{font-size:12px;padding:4px 10px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:1.25rem}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.metric{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:1rem 1.25rem}
+.metric-label{font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+.metric-value{font-size:20px;font-weight:500;font-family:'DM Serif Display',serif}
+.mv-green{color:#1D9E75}.mv-red{color:#D85A30}.mv-amber{color:#BA7517}.mv-blue{color:#185FA5}.mv-purple{color:#534AB7}.mv-teal{color:#0F6E56}.mv-cash{color:#B45309}
+.metric-hint{font-size:11px;color:var(--color-text-tertiary);margin-top:3px}
+.metric-delta{font-size:11px;margin-top:3px}
+.delta-up{color:#1D9E75}.delta-down{color:#D85A30}.delta-flat{color:var(--color-text-tertiary)}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;font-size:10px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:0.5px solid var(--color-border-tertiary)}
+td{padding:9px 12px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.badge-paid{background:#E1F5EE;color:#0F6E56}.badge-pending{background:#FAEEDA;color:#854F0B}
+.badge-overdue{background:#FAECE7;color:#993C1D}.badge-open{background:#E6F1FB;color:#185FA5}
+.badge-done{background:#EAF3DE;color:#3B6D11}.badge-cancelled{background:#F1EFE8;color:#5F5E5A}
+.badge-fullypaid{background:#E1F5EE;color:#0F6E56}.badge-partial{background:#FAEEDA;color:#854F0B}.badge-unpaid{background:#FAECE7;color:#993C1D}
+.badge-in{background:#E1F5EE;color:#0F6E56}.badge-out{background:#FAECE7;color:#993C1D}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--color-background-primary);border-radius:12px;padding:1.5rem;width:480px;max-width:100%;max-height:88vh;overflow-y:auto;border:0.5px solid var(--color-border-secondary)}
+.modal-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:1.25rem;color:var(--color-text-primary)}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:6px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:'DM Sans',var(--font-sans)}
+.field textarea{resize:vertical;min-height:55px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:0.5px solid var(--color-border-tertiary)}
+.empty-state{text-align:center;padding:2.5rem;color:var(--color-text-secondary);font-size:14px}
+.sec-title{font-size:10px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin:1.25rem 0 0.75rem}
+.sel{padding:6px 10px;border:0.5px solid var(--color-border-secondary);border-radius:6px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:'DM Sans',var(--font-sans)}
+.row-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.pbar{background:var(--color-background-secondary);border-radius:4px;height:8px;overflow:hidden;margin:6px 0}
+.pfill{height:100%;border-radius:4px;transition:width 0.4s}
+.cat-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
+.cat-label{width:85px;color:var(--color-text-secondary);text-align:right;flex-shrink:0}
+.cat-track{flex:1;height:7px;background:var(--color-background-secondary);border-radius:4px;overflow:hidden}
+.cat-fill{height:100%;border-radius:4px}
+.cat-val{width:78px;font-size:11px;color:var(--color-text-secondary);text-align:right}
+.chart-wrap{position:relative;height:140px;display:flex;align-items:flex-end;gap:3px;padding:0 2px}
+.bar-group{flex:1;display:flex;gap:2px;align-items:flex-end;position:relative}
+.bar-col{flex:1;border-radius:3px 3px 0 0;min-height:2px}
+.bar-label{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:var(--color-text-tertiary);white-space:nowrap}
+.chart-axis{height:1px;background:var(--color-border-tertiary);margin:4px 0 24px}
+.month-nav{display:flex;align-items:center;gap:12px}
+.month-nav button{width:28px;height:28px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+.month-display{font-size:15px;font-weight:500;min-width:120px;text-align:center}
+.oh-tabs{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.oh-tab{padding:8px 18px;font-size:13px;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',var(--font-sans)}
+.oh-tab.active{color:#1D9E75;border-bottom-color:#1D9E75;font-weight:500}
+.oh-section{display:none}.oh-section.active{display:block}
+.client-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color 0.15s}
+.client-card.selected{border-color:#1D9E75}
+.client-card-header{padding:0.9rem 1rem;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#0F6E56;flex-shrink:0}
+.emp-avatar{width:30px;height:30px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#185FA5;flex-shrink:0}
+.ccm-grid{display:grid;grid-template-columns:1fr 1fr 1fr}
+.ccm{padding:0.6rem 0.75rem;text-align:center}
+.ccm:not(:last-child){border-right:0.5px solid var(--color-border-tertiary)}
+.ccm-label{font-size:10px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px}
+.ccm-val{font-size:13px;font-weight:500}
+.pay-bar-bg{height:5px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;margin-top:3px;width:80px}
+.pay-bar-fill{height:100%;border-radius:3px;background:#1D9E75}
+.split-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--color-background-secondary);border-radius:6px;font-size:13px}
+.split-row select,.split-row input{padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:5px;font-size:12px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:'DM Sans',var(--font-sans)}
+.split-row select{flex:2}
+.split-row input{width:90px;flex-shrink:0}
+.split-row button{background:none;border:none;color:var(--color-text-tertiary);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0}
+.cash-balance-card{background:linear-gradient(135deg,#1a4731 0%,#1D9E75 100%);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;color:#fff}
+.cash-balance-label{font-size:11px;opacity:0.75;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.cash-balance-amount{font-family:'DM Serif Display',serif;font-size:36px;font-weight:400}
+.cash-balance-sub{font-size:12px;opacity:0.7;margin-top:6px}
+.cash-row-in{border-left:3px solid #1D9E75}
+.cash-row-out{border-left:3px solid #D85A30}
+.cash-filter-tabs{display:flex;gap:6px;margin-bottom:1rem}
+.cash-filter-tab{padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-family:'DM Sans',var(--font-sans)}
+.cash-filter-tab.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
+
+/* confirm dialog */
+#confirm-box{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;padding:1rem}
+#confirm-box.open{display:flex}
+.confirm-inner{background:var(--color-background-primary);border-radius:12px;padding:1.5rem;width:300px;max-width:100%;border:0.5px solid var(--color-border-secondary)}
+
+/* mobile responsive */
+@media(max-width:768px){
+  .sidebar{width:190px}
+  .grid4{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+  .main{padding:1rem}
+}
+@media(max-width:500px){
+  .sidebar{display:none}
+  .main{padding:0.75rem}
+  .grid4{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="confirm-box">
+  <div class="confirm-inner">
+    <div style="font-size:15px;font-weight:500;margin-bottom:6px;color:var(--color-text-primary)">Delete entry?</div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:1.25rem">This cannot be undone.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="confirm-cancel-btn" class="btn">Cancel</button>
+      <button id="confirm-ok-btn" class="btn" style="background:#D85A30;color:#fff;border-color:#D85A30;font-weight:500">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="install-banner">
+  <span>📲 Install Al-Najjar as a desktop app</span>
+  <div style="display:flex;gap:8px">
+    <button id="install-btn">Install</button>
+    <button class="dismiss" id="dismiss-install">✕</button>
+  </div>
+</div>
+
+<div class="app">
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-title">Al-Najjar</div>
+    <div class="logo-sub">Carpentry Manager</div>
+  </div>
+  <div class="nav-group">Overview</div>
+  <div class="nav-item active" data-page="dashboard">⬛ Dashboard</div>
+  <div class="nav-item" data-page="monthly">📅 Monthly Report</div>
+  <div class="nav-group">Operations</div>
+  <div class="nav-item" data-page="cash">💵 Cash Ledger</div>
+  <div class="nav-item" data-page="overhead">🏠 Rent & Salaries</div>
+  <div class="nav-item" data-page="shared">🪵 Shared Materials</div>
+  <div class="nav-item" data-page="expenses">📤 Expenses</div>
+  <div class="nav-group">Projects</div>
+  <div class="nav-item" data-page="clients-report">📊 Client Reports</div>
+  <div class="nav-item" data-page="projects">📋 Projects</div>
+  <div class="nav-item" data-page="invoices">🧾 Invoices</div>
+  <div class="nav-item" data-page="clients">👤 Clients</div>
+</div>
+<div class="main">
+
+<div id="page-dashboard" class="page active">
+  <div class="page-header">
+    <div><div class="page-title">Dashboard</div><div class="page-sub">Your business at a glance</div></div>
+    <select class="sel" id="dash-filter"><option value="all">All time</option></select>
+  </div>
+  <div class="grid4">
+    <div class="metric"><div class="metric-label">Total Income</div><div class="metric-value mv-green" id="dm-income">KWD 0.000</div><div class="metric-hint">Paid invoices</div></div>
+    <div class="metric"><div class="metric-label">Total Expenses</div><div class="metric-value mv-red" id="dm-expense">KWD 0.000</div><div class="metric-hint">All costs</div></div>
+    <div class="metric"><div class="metric-label">Net Profit</div><div class="metric-value mv-green" id="dm-profit">KWD 0.000</div><div class="metric-hint" id="dm-margin">Margin 0%</div></div>
+    <div class="metric"><div class="metric-label">Cash Balance</div><div class="metric-value mv-cash" id="dm-cash-balance">KWD 0.000</div><div class="metric-hint" id="dm-cash-hint">Cash in hand</div></div>
+  </div>
+  <div class="grid4" style="margin-bottom:1.5rem">
+    <div class="metric"><div class="metric-label">Project Pending</div><div class="metric-value mv-amber" id="dm-pending">KWD 0.000</div><div class="metric-hint" id="dm-pending-hint">Uncollected</div></div>
+    <div class="metric"><div class="metric-label">Rent this month</div><div class="metric-value mv-purple" id="dm-rent">KWD 0.000</div></div>
+    <div class="metric"><div class="metric-label">Salaries this month</div><div class="metric-value mv-blue" id="dm-salary">KWD 0.000</div><div class="metric-hint" id="dm-emp-count"></div></div>
+    <div class="metric"><div class="metric-label">Shared materials</div><div class="metric-value mv-teal" id="dm-shared">KWD 0.000</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">Profit margin</div>
+      <div class="pbar"><div class="pfill" id="profit-bar" style="width:0%"></div></div>
+      <div style="font-size:12px;color:var(--color-text-secondary)" id="profit-bar-label">0% of income is profit</div>
+      <div class="sec-title">Expenses breakdown</div>
+      <div id="dash-cats"></div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">Income vs expenses — 6 months</div>
+      <div class="chart-wrap" id="dash-chart"></div>
+      <div class="chart-axis"></div>
+      <div style="display:flex;gap:14px;font-size:11px;color:var(--color-text-secondary);margin-bottom:1rem">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1D9E75;margin-right:4px;vertical-align:middle"></span>Income</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#D85A30;margin-right:4px;vertical-align:middle"></span>Expenses</span>
+      </div>
+      <div class="sec-title" style="margin-top:0">Recent activity</div>
+      <div id="dash-activity"></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-cash" class="page">
+  <div class="page-header">
+    <div><div class="page-title">Cash Ledger</div><div class="page-sub">Every cash transaction in and out</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-in" id="btn-cash-in">+ Cash In</button>
+      <button class="btn btn-out" id="btn-cash-out">− Cash Out</button>
+    </div>
+  </div>
+  <div class="cash-balance-card">
+    <div class="cash-balance-label">Current cash balance</div>
+    <div class="cash-balance-amount" id="cash-balance-display">KWD 0.000</div>
+    <div class="cash-balance-sub" id="cash-balance-sub">0 transactions</div>
+  </div>
+  <div class="grid3" style="margin-bottom:1.5rem">
+    <div class="metric"><div class="metric-label">Total cash in</div><div class="metric-value mv-green" id="cash-total-in">KWD 0.000</div></div>
+    <div class="metric"><div class="metric-label">Total cash out</div><div class="metric-value mv-red" id="cash-total-out">KWD 0.000</div></div>
+    <div class="metric"><div class="metric-label">This month net</div><div class="metric-value mv-cash" id="cash-month-net">KWD 0.000</div><div class="metric-hint" id="cash-month-label"></div></div>
+  </div>
+  <div class="cash-filter-tabs">
+    <button class="cash-filter-tab active" data-cashfilter="all">All</button>
+    <button class="cash-filter-tab" data-cashfilter="in">Cash In</button>
+    <button class="cash-filter-tab" data-cashfilter="out">Cash Out</button>
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Date</th><th>Reference</th><th>Actions</th></tr></thead>
+    <tbody id="cash-tbody"></tbody>
+  </table></div></div>
+</div>
+
+<div id="page-monthly" class="page">
+  <div class="page-header">
+    <div><div class="page-title">Monthly Report</div><div class="page-sub">Full breakdown for any month</div></div>
+    <div class="month-nav">
+      <button id="btn-prev-month">&#8249;</button>
+      <div class="month-display" id="month-display">—</div>
+      <button id="btn-next-month">&#8250;</button>
+    </div>
+  </div>
+  <div class="grid4" id="mr-metrics"></div>
+  <div class="grid4" id="mr-overhead-metrics" style="margin-bottom:1.5rem"></div>
+  <div class="grid2" style="margin-bottom:1.5rem">
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">6-month trend</div>
+      <div class="chart-wrap" id="mr-chart"></div>
+      <div class="chart-axis"></div>
+      <div style="display:flex;gap:12px;font-size:11px;color:var(--color-text-secondary)">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1D9E75;margin-right:4px;vertical-align:middle"></span>Income</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#D85A30;margin-right:4px;vertical-align:middle"></span>Expenses</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#378ADD;margin-right:4px;vertical-align:middle"></span>Profit</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">Breakdown</div><div id="mr-cats"></div>
+      <div class="sec-title">Top clients</div><div id="mr-top-clients"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="sec-title" style="margin-top:0">Invoices</div><div id="mr-invoices"></div></div>
+    <div class="card"><div class="sec-title" style="margin-top:0">All expenses</div><div id="mr-expenses"></div></div>
+  </div>
+</div>
+
+<div id="page-overhead" class="page">
+  <div class="page-header"><div><div class="page-title">Rent & Salaries</div><div class="page-sub">Fixed overhead</div></div></div>
+  <div class="oh-tabs">
+    <button class="oh-tab active" data-ohtab="rent">🏠 Rent</button>
+    <button class="oh-tab" data-ohtab="salary">👷 Employees & Salaries</button>
+  </div>
+  <div id="oh-rent" class="oh-section active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:10px">
+      <div class="grid3" id="rent-summary" style="flex:1;margin-right:16px;margin-bottom:0;min-width:200px"></div>
+      <button class="btn btn-primary" id="btn-add-rent">+ Add rent payment</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Description</th><th>Amount</th><th>For month</th><th>Date paid</th><th>Actions</th></tr></thead>
+      <tbody id="rent-tbody"></tbody>
+    </table></div></div>
+  </div>
+  <div id="oh-salary" class="oh-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;color:var(--color-text-secondary)">Manage employees and pay salaries</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="btn-add-employee">+ Add employee</button>
+        <button class="btn btn-primary" id="btn-add-salary">+ Record salary</button>
+      </div>
+    </div>
+    <div id="employees-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:1.5rem"></div>
+    <div class="sec-title" style="margin-top:0">Salary history</div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Employee</th><th>Amount</th><th>For month</th><th>Date paid</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="salary-tbody"></tbody>
+    </table></div></div>
+  </div>
+</div>
+
+<div id="page-shared" class="page">
+  <div class="page-header">
+    <div><div class="page-title">Shared Materials</div><div class="page-sub">Split costs between projects</div></div>
+    <button class="btn btn-primary" id="btn-add-shared">+ Add shared expense</button>
+  </div>
+  <div class="grid3" id="shared-summary" style="margin-bottom:1.5rem"></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Description</th><th>Total cost</th><th>Date</th><th>Split between</th><th>Actions</th></tr></thead>
+    <tbody id="shared-tbody"></tbody>
+  </table></div></div>
+</div>
+
+<div id="page-expenses" class="page">
+  <div class="page-header">
+    <div><div class="page-title">Expenses</div><div class="page-sub">Project-specific costs</div></div>
+    <button class="btn btn-primary" id="btn-add-expense">+ Add expense</button>
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Date</th><th>Actions</th></tr></thead>
+    <tbody id="expenses-tbody"></tbody>
+  </table></div></div>
+</div>
+
+<div id="page-clients-report" class="page">
+  <div class="page-header">
+    <div><div class="page-title">Client Reports</div></div>
+    <select class="sel" id="cr-filter"><option value="all">All time</option></select>
+  </div>
+  <div id="cr-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:1.5rem"></div>
+  <div id="cr-detail"></div>
+</div>
+
+<div id="page-projects" class="page">
+  <div class="page-header"><div><div class="page-title">Projects</div></div><button class="btn btn-primary" id="btn-add-project">+ New project</button></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Client</th><th>Value</th><th>Paid</th><th>Remaining</th><th>Payment</th><th>Status</th><th>Due</th><th></th></tr></thead>
+    <tbody id="projects-tbody"></tbody>
+  </table></div></div>
+</div>
+
+<div id="page-invoices" class="page">
+  <div class="page-header"><div><div class="page-title">Invoices</div></div><button class="btn btn-primary" id="btn-add-invoice">+ New invoice</button></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Client</th><th>Project</th><th>Amount</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody id="invoices-tbody"></tbody>
+  </table></div></div>
+</div>
+
+<div id="page-clients" class="page">
+  <div class="page-header"><div><div class="page-title">Clients</div></div><button class="btn btn-primary" id="btn-add-client">+ Add client</button></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Projects</th><th>Total billed</th><th>Actions</th></tr></thead>
+    <tbody id="clients-tbody"></tbody>
+  </table></div></div>
+</div>
+
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-cash"><div class="modal">
+  <div class="modal-title" id="cash-modal-title">Cash In</div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem">
+    <button class="btn btn-in" id="cash-type-in-btn" style="flex:1">💵 Cash In</button>
+    <button class="btn" id="cash-type-out-btn" style="flex:1">💸 Cash Out</button>
+  </div>
+  <div class="field"><label>Description</label><input id="ca-desc" placeholder="e.g. Received payment from client"/></div>
+  <div class="field-row">
+    <div class="field"><label>Amount (KWD)</label><input id="ca-amount" type="number" min="0" step="0.001"/></div>
+    <div class="field"><label>Date</label><input id="ca-date" type="date"/></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Category</label><select id="ca-cat"><option value="Sales">Sales / Collection</option><option value="Advance">Advance payment</option><option value="Materials">Materials purchase</option><option value="Tools">Tools purchase</option><option value="Labor">Labor payment</option><option value="Utilities">Utilities</option><option value="Transport">Transport</option><option value="Other">Other</option></select></div>
+    <div class="field"><label>Reference (optional)</label><input id="ca-ref" placeholder="Invoice # or note"/></div>
+  </div>
+  <div class="field"><label>Notes</label><textarea id="ca-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="cash-cancel-btn">Cancel</button><button class="btn btn-primary" id="cash-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-rent"><div class="modal">
+  <div class="modal-title" id="rent-modal-title">Add rent payment</div>
+  <div class="field"><label>Description</label><input id="r-desc" placeholder="e.g. Workshop rent June"/></div>
+  <div class="field-row"><div class="field"><label>Amount (KWD)</label><input id="r-amount" type="number" min="0" step="0.001"/></div><div class="field"><label>For month</label><input id="r-month" type="month"/></div></div>
+  <div class="field"><label>Date paid</label><input id="r-date" type="date"/></div>
+  <div class="modal-actions"><button class="btn" id="rent-cancel-btn">Cancel</button><button class="btn btn-primary" id="rent-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-employee"><div class="modal">
+  <div class="modal-title" id="emp-modal-title">Add employee</div>
+  <div class="field"><label>Full name</label><input id="em-name"/></div>
+  <div class="field-row"><div class="field"><label>Role</label><input id="em-role"/></div><div class="field"><label>Base salary (KWD/month)</label><input id="em-salary" type="number" min="0" step="0.001"/></div></div>
+  <div class="field"><label>Phone</label><input id="em-phone"/></div>
+  <div class="field"><label>Notes</label><textarea id="em-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="emp-cancel-btn">Cancel</button><button class="btn btn-primary" id="emp-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-salary"><div class="modal">
+  <div class="modal-title" id="sal-modal-title">Record salary payment</div>
+  <div class="field-row"><div class="field"><label>Employee</label><select id="s-emp"></select></div><div class="field"><label>Amount (KWD)</label><input id="s-amount" type="number" min="0" step="0.001"/></div></div>
+  <div class="field-row"><div class="field"><label>For month</label><input id="s-month" type="month"/></div><div class="field"><label>Date paid</label><input id="s-date" type="date"/></div></div>
+  <div class="field"><label>Notes</label><textarea id="s-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="sal-cancel-btn">Cancel</button><button class="btn btn-primary" id="sal-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-shared"><div class="modal">
+  <div class="modal-title" id="shared-modal-title">Add shared expense</div>
+  <div class="field"><label>Description</label><input id="sh-desc"/></div>
+  <div class="field-row"><div class="field"><label>Total cost (KWD)</label><input id="sh-amount" type="number" min="0" step="0.001"/></div><div class="field"><label>Date</label><input id="sh-date" type="date"/></div></div>
+  <div class="field"><label>Category</label><select id="sh-cat"><option>Materials</option><option>Tools</option><option>Other</option></select></div>
+  <div class="field">
+    <label>Split between projects</label>
+    <div id="split-rows"></div>
+    <button class="btn btn-sm" id="add-split-btn" style="margin-top:6px">+ Add project split</button>
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px" id="split-total-hint"></div>
+  </div>
+  <div class="field"><label>Notes</label><textarea id="sh-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="shared-cancel-btn">Cancel</button><button class="btn btn-primary" id="shared-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-project"><div class="modal">
+  <div class="modal-title" id="mpt">New project</div>
+  <div class="field"><label>Project name</label><input id="p-name"/></div>
+  <div class="field-row"><div class="field"><label>Client</label><select id="p-client"></select></div><div class="field"><label>Value (KWD)</label><input id="p-value" type="number" min="0" step="0.001"/></div></div>
+  <div class="field-row"><div class="field"><label>Start date</label><input id="p-start" type="date"/></div><div class="field"><label>Due date</label><input id="p-due" type="date"/></div></div>
+  <div class="field"><label>Status</label><select id="p-status"><option>Open</option><option>In progress</option><option>Done</option><option>Cancelled</option></select></div>
+  <div class="field"><label>Notes</label><textarea id="p-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="proj-cancel-btn">Cancel</button><button class="btn btn-primary" id="proj-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-invoice"><div class="modal">
+  <div class="modal-title" id="mit">New invoice</div>
+  <div class="field-row"><div class="field"><label>Client</label><select id="i-client"></select></div><div class="field"><label>Project</label><select id="i-project"></select></div></div>
+  <div class="field-row"><div class="field"><label>Amount (KWD)</label><input id="i-amount" type="number" min="0" step="0.001"/></div><div class="field"><label>Date</label><input id="i-date" type="date"/></div></div>
+  <div class="field"><label>Status</label><select id="i-status"><option>Pending</option><option>Paid</option><option>Overdue</option></select></div>
+  <div class="field"><label>Notes</label><textarea id="i-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="inv-cancel-btn">Cancel</button><button class="btn btn-primary" id="inv-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-expense"><div class="modal">
+  <div class="modal-title" id="met">Add expense</div>
+  <div class="field"><label>Description</label><input id="e-desc"/></div>
+  <div class="field-row"><div class="field"><label>Amount (KWD)</label><input id="e-amount" type="number" min="0" step="0.001"/></div><div class="field"><label>Date</label><input id="e-date" type="date"/></div></div>
+  <div class="field-row"><div class="field"><label>Category</label><select id="e-cat"><option>Materials</option><option>Tools</option><option>Labor</option><option>Transport</option><option>Utilities</option><option>Other</option></select></div><div class="field"><label>Project</label><select id="e-project"></select></div></div>
+  <div class="modal-actions"><button class="btn" id="exp-cancel-btn">Cancel</button><button class="btn btn-primary" id="exp-save-btn">Save</button></div>
+</div></div>
+
+<div class="modal-bg" id="modal-client"><div class="modal">
+  <div class="modal-title" id="mct">Add client</div>
+  <div class="field"><label>Full name</label><input id="c-name"/></div>
+  <div class="field-row"><div class="field"><label>Phone</label><input id="c-phone"/></div><div class="field"><label>Area</label><input id="c-area"/></div></div>
+  <div class="field"><label>Notes</label><textarea id="c-notes"></textarea></div>
+  <div class="modal-actions"><button class="btn" id="cli-cancel-btn">Cancel</button><button class="btn btn-primary" id="cli-save-btn">Save</button></div>
+</div></div>
+
+<script src="app.js"></script>
+</body>
+</html>
