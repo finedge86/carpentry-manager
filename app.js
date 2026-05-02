@@ -482,4 +482,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.exportData = exportData;
 window.importData = importData;
+(function(){
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;bottom:16px;right:16px;display:flex;gap:8px;z-index:500';
+  bar.innerHTML = `
+    <button onclick="(function(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([localStorage.getItem('carpv3')],{type:'application/json'}));a.download='alnajjar-backup-'+new Date().toISOString().split('T')[0]+'.json';a.click();})()" style="padding:8px 14px;border-radius:8px;background:#1D9E75;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.15)">⬇ Export data</button>
+    <button onclick="(function(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{JSON.parse(ev.target.result);localStorage.setItem('carpv3',ev.target.result);location.reload();}catch(e){alert('Invalid file');}};r.readAsText(e.target.files[0]);};i.click();})()" style="padding:8px 14px;border-radius:8px;background:#185FA5;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.15)">⬆ Import data</button>
+  `;
+  document.body.appendChild(bar);
+})();
 renderDash();
