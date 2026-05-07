@@ -229,20 +229,18 @@ tr:hover td{background:var(--bg3)}
 <!-- DASHBOARD -->
 <div id="pg-dash" class="pg on">
   <div class="ph"><div><div class="pt">Dashboard</div><div class="ps">Fine Edge — business overview</div></div><select class="sel" id="df"><option value="all">All time</option></select></div>
-  <div class="total-card tc-pos" id="tc">
-    <div class="total-big-icon" id="tc-icon">💰</div>
-    <div>
-      <div class="tc-label" id="tc-lbl">💰 Total Business Value</div>
-      <div class="tc-value" id="tc-val">KWD 0.000</div>
-      <div class="tc-sub">Cash Balance + Net Profit</div>
-    </div>
-    <div class="tc-divider"></div>
-    <div class="tc-right">
-      <div class="brow"><span class="bdot" style="background:#7affca"></span><span id="tc-cash">💵 Cash: KWD 0.000</span></div>
-      <div class="brow"><span class="bdot" style="background:rgba(255,255,255,.6)"></span><span id="tc-pft">📈 Profit: KWD 0.000</span></div>
-      <div style="font-size:11px;opacity:.5;margin-top:5px" id="tc-mgn">Margin 0%</div>
-    </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.4rem">
+  <div class="total-card tc-pos" id="tc-cash-card" style="margin-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:1.2rem 1.4rem">
+    <div style="font-size:10px;font-weight:500;opacity:.75;text-transform:uppercase;letter-spacing:.5px">💵 Cash Balance</div>
+    <div class="tc-value" id="tc-val" style="font-size:28px">KWD 0.000</div>
+    <div style="font-size:11px;opacity:.65" id="tc-cash">In: KWD 0.000 &nbsp;|&nbsp; Out: KWD 0.000</div>
   </div>
+  <div class="total-card" id="tc-pft-card" style="margin-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:1.2rem 1.4rem;background:linear-gradient(135deg,#0d3320,#1D9E75)">
+    <div style="font-size:10px;font-weight:500;opacity:.75;text-transform:uppercase;letter-spacing:.5px">📈 Net Profit</div>
+    <div class="tc-value" id="tc-pft" style="font-size:28px;color:#fff">KWD 0.000</div>
+    <div style="font-size:11px;opacity:.65;color:#fff" id="tc-mgn">Margin 0%</div>
+  </div>
+</div>
   <div class="g4">
     <div class="met"><div class="mic">📥</div><div class="ml">Income</div><div class="mv vg" id="d-inc">KWD 0.000</div><div class="mh">Paid invoices</div></div>
     <div class="met"><div class="mic">📤</div><div class="ml">Expenses</div><div class="mv vr" id="d-exp">KWD 0.000</div></div>
@@ -571,7 +569,7 @@ function rDash(){
   const inc=fD(DB.invoices).filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amount,0);
   const ex=tExp(m);const pft=inc-ex.t,mgn=inc>0?Math.round(pft/inc*100):0;
   const{i,o,b}=cashBal();
-  const total=pft-o;
+  const total=b;
   // TOTAL CARD
   document.getElementById('tc').className='total-card '+(total>=0?'tc-pos':'tc-neg');
   document.getElementById('tc-icon').textContent=total>=0?'💰':'⚠️';
