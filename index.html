@@ -571,15 +571,15 @@ function rDash(){
   const inc=fD(DB.invoices).filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amount,0);
   const ex=tExp(m);const pft=inc-ex.t,mgn=inc>0?Math.round(pft/inc*100):0;
   const{i,o,b}=cashBal();
-  const total=b+pft;
+  const total=pft-o;
   // TOTAL CARD
   document.getElementById('tc').className='total-card '+(total>=0?'tc-pos':'tc-neg');
   document.getElementById('tc-icon').textContent=total>=0?'💰':'⚠️';
   document.getElementById('tc-lbl').textContent=total>=0?'💰 Total Business Value':'⚠️ Total Business Value';
   document.getElementById('tc-val').textContent=kwd(total);
-  document.getElementById('tc-cash').textContent=`💵 Cash Balance: ${kwd(b)}`;
-  document.getElementById('tc-pft').textContent=`${pft>=0?'📈':'📉'} Net Profit: ${kwd(pft)}`;
-  document.getElementById('tc-mgn').textContent=`Profit margin: ${mgn}%  |  Income: ${kwd(inc)}`;
+  document.getElementById('tc-cash').textContent=`💵 Cash In: ${kwd(i)}`;
+  document.getElementById('tc-pft').textContent=`💸 Cash Out: ${kwd(o)}`;
+  document.getElementById('tc-mgn').textContent=`Profit: ${kwd(pft)}  |  Cash Out: ${kwd(o)}`;const tcSub=document.getElementById('tc-sub');if(tcSub)tcSub.textContent='Net Profit − Cash Out = Actual Balance';
   // METRICS
   document.getElementById('d-inc').textContent=kwd(inc);document.getElementById('d-exp').textContent=kwd(ex.t);
   document.getElementById('d-pnd').textContent=kwd(totPend());document.getElementById('d-pnd2').textContent=DB.projects.filter(p=>p.status!=='Cancelled'&&prem(p)>0).length+' project(s)';
