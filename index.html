@@ -461,7 +461,7 @@ document.getElementById('cyes').onclick=()=>{document.getElementById('cbox').cla
 document.getElementById('cno').onclick=()=>{document.getElementById('cbox').classList.remove('on');_cb=null};
 const ask=cb=>{_cb=cb;document.getElementById('cbox').classList.add('on')};
 // TOTALS
-const tExp=m=>{const fD=a=>m&&m!=='all'?a.filter(x=>(x.date||'').startsWith(m)):a;const fM=a=>m&&m!=='all'?a.filter(x=>(x.month||'').startsWith(m)):a;return{e:fD(DB.expenses).reduce((s,x)=>s+x.amount,0),r:fM(DB.rentPayments).reduce((s,x)=>s+x.amount,0),sl:fM(DB.salaryPayments).reduce((s,x)=>s+x.amount,0),sh:fD(DB.sharedExpenses).reduce((s,x)=>s+x.amount,0),get t(){return this.e+this.r+this.sl+this.sh}}};
+const tExp=m=>{const fD=a=>m&&m!=='all'?a.filter(x=>(x.date||'').startsWith(m)):a;const fM=a=>m&&m!=='all'?a.filter(x=>(x.month||'').startsWith(m)):a;const e=fD(DB.expenses).reduce((s,x)=>s+x.amount,0),r=fM(DB.rentPayments).reduce((s,x)=>s+x.amount,0),sl=fM(DB.salaryPayments).reduce((s,x)=>s+x.amount,0),sh=fD(DB.sharedExpenses).reduce((s,x)=>s+x.amount,0);return{e,r,sl,sh,t:e+r+sl+sh}};
 const cashBal=()=>{const i=DB.cashTransactions.filter(t=>t.type==='in').reduce((s,t)=>s+t.amount,0);const o=DB.cashTransactions.filter(t=>t.type==='out').reduce((s,t)=>s+t.amount,0);return{i,o,b:i-o}};
 const ppaid=id=>DB.invoices.filter(i=>i.projectId===id&&i.status==='Paid').reduce((s,i)=>s+i.amount,0);
 const prem=p=>Math.max(0,(p.value||0)-ppaid(p.id));
@@ -477,7 +477,7 @@ document.querySelectorAll('.cftb').forEach(b=>b.addEventListener('click',()=>{do
 // MODALS
 const om=id=>document.getElementById('m-'+id).classList.add('on');
 const cm=id=>document.getElementById('m-'+id).classList.remove('on');
-[['m-cash-x','cash'],['m-rent-x','rent'],['m-emp-x','emp'],['m-sal-x','sal'],['m-sh-x','sh'],['m-proj-x','proj'],['m-inv-x','inv'],['m-exp-x','exp'],['m-cli-x','cli']].forEach(([b,m])=>document.getElementById(b).addEventListener('click',()=>cm(m)));
+[['cash-x','cash'],['rent-x','rent'],['emp-x','emp'],['sal-x','sal'],['sh-x','sh'],['proj-x','proj'],['inv-x','inv'],['exp-x','exp'],['cli-x','cli']].forEach(([b,m])=>document.getElementById(b).addEventListener('click',()=>cm(m)));
 document.querySelectorAll('.mb').forEach(mb=>mb.addEventListener('click',e=>{if(e.target===mb)mb.classList.remove('on')}));
 // CASH
 function setCT(t){cashType=t;const ib=document.getElementById('ctib'),ob=document.getElementById('ctob');if(t==='in'){ib.className='btn btn-i';ib.style.flex='1';ob.className='btn';ob.style.flex='1';document.getElementById('mcst').textContent='Cash In';document.getElementById('ca-c').innerHTML='<option value="Sales">Sales/Collection</option><option value="Advance">Advance</option><option value="Refund">Refund</option><option value="Other">Other</option>'}else{ob.className='btn btn-o';ob.style.flex='1';ib.className='btn';ib.style.flex='1';document.getElementById('mcst').textContent='Cash Out';document.getElementById('ca-c').innerHTML='<option value="Materials">Materials</option><option value="Tools">Tools</option><option value="Labor">Labor</option><option value="Utilities">Utilities</option><option value="Transport">Transport</option><option value="Rent">Rent</option><option value="Salary">Salary</option><option value="Other">Other</option>'}}
