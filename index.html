@@ -569,7 +569,7 @@ function rDash(){
   const aM=[...new Set([...DB.invoices,...DB.expenses,...DB.sharedExpenses].map(x=>x.date&&x.date.slice(0,7)).filter(Boolean))].sort().reverse();
   const sel=document.getElementById('df');const cv=sel.value;sel.innerHTML='<option value="all">All time</option>'+aM.map(mo=>`<option value="${mo}">${fm(mo)}</option>`).join('');if(aM.includes(cv))sel.value=cv;
   const m=sel.value;const fD=a=>m&&m!=='all'?a.filter(x=>(x.date||'').startsWith(m)):a;
-  const inc=fD(DB.invoices).filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amount,0);
+  const inc=fD(DB.invoices).filter(i=>i.status==='Paid'&&!String(i.notes||'').startsWith('💵 Cash payment')).reduce((s,i)=>s+i.amount,0);
   const ex=tExp(m);const pft=inc-ex.t,mgn=inc>0?Math.round(pft/inc*100):0;
   const{i,o,b}=cashBal();
   const total=b;
