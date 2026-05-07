@@ -229,18 +229,21 @@ tr:hover td{background:var(--bg3)}
 <!-- DASHBOARD -->
 <div id="pg-dash" class="pg on">
   <div class="ph"><div><div class="pt">Dashboard</div><div class="ps">Fine Edge — business overview</div></div><select class="sel" id="df"><option value="all">All time</option></select></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.4rem">
-  <div class="total-card tc-pos" id="tc-cash-card" style="margin-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:1.2rem 1.4rem">
-    <div style="font-size:10px;font-weight:500;opacity:.75;text-transform:uppercase;letter-spacing:.5px">💵 Cash Balance</div>
-    <div class="tc-value" id="tc-val" style="font-size:28px">KWD 0.000</div>
-    <div style="font-size:11px;opacity:.65" id="tc-cash">In: KWD 0.000 &nbsp;|&nbsp; Out: KWD 0.000</div>
+  <div class="total-card tc-pos" id="tc" style="margin-bottom:1.4rem">
+    <div class="total-big-icon" id="tc-icon">📈</div>
+    <div style="flex:1">
+      <div class="tc-label" id="tc-lbl">📈 Net Profit</div>
+      <div class="tc-value" id="tc-pft" style="font-size:32px">KWD 0.000</div>
+      <div style="font-size:12px;opacity:.65;margin-top:4px" id="tc-mgn">Margin 0%  |  Income: KWD 0.000</div>
+    </div>
+    <div class="tc-divider"></div>
+    <div class="tc-right">
+      <div style="font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💵 Cash Balance</div>
+      <div style="font-size:22px;font-weight:500;font-family:'DM Serif Display',serif;margin-bottom:4px" id="tc-val">KWD 0.000</div>
+      <div class="brow" style="margin-bottom:2px"><span class="bdot" style="background:#7affca"></span><span id="tc-cash" style="font-size:12px">In: KWD 0.000</span></div>
+      <div class="brow"><span class="bdot" style="background:rgba(255,255,255,.5)"></span><span id="tc-out" style="font-size:12px">Out: KWD 0.000</span></div>
+    </div>
   </div>
-  <div class="total-card" id="tc-pft-card" style="margin-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:1.2rem 1.4rem;background:linear-gradient(135deg,#0d3320,#1D9E75)">
-    <div style="font-size:10px;font-weight:500;opacity:.75;text-transform:uppercase;letter-spacing:.5px">📈 Net Profit</div>
-    <div class="tc-value" id="tc-pft" style="font-size:28px;color:#fff">KWD 0.000</div>
-    <div style="font-size:11px;opacity:.65;color:#fff" id="tc-mgn">Margin 0%</div>
-  </div>
-</div>
   <div class="g4">
     <div class="met"><div class="mic">📥</div><div class="ml">Income</div><div class="mv vg" id="d-inc">KWD 0.000</div><div class="mh">Paid invoices</div></div>
     <div class="met"><div class="mic">📤</div><div class="ml">Expenses</div><div class="mv vr" id="d-exp">KWD 0.000</div></div>
@@ -572,12 +575,14 @@ function rDash(){
   const total=b;
   // TOTAL CARD
   document.getElementById('tc').className='total-card '+(total>=0?'tc-pos':'tc-neg');
-  document.getElementById('tc-icon').textContent=total>=0?'💰':'⚠️';
-  document.getElementById('tc-lbl').textContent=total>=0?'💰 Total Business Value':'⚠️ Total Business Value';
-  document.getElementById('tc-val').textContent=kwd(total);
-  document.getElementById('tc-cash').textContent=`💵 Cash In: ${kwd(i)}`;
-  document.getElementById('tc-pft').textContent=`💸 Cash Out: ${kwd(o)}`;
-  document.getElementById('tc-mgn').textContent=`Profit: ${kwd(pft)}  |  Cash Out: ${kwd(o)}`;const tcSub=document.getElementById('tc-sub');if(tcSub)tcSub.textContent='Net Profit − Cash Out = Actual Balance';
+  const tc2=document.getElementById('tc');if(tc2)tc2.className='total-card '+(pft>=0?'tc-pos':'tc-neg');
+  const ti2=document.getElementById('tc-icon');if(ti2)ti2.textContent=pft>=0?'📈':'📉';
+  const tl2=document.getElementById('tc-lbl');if(tl2)tl2.textContent=pft>=0?'📈 Net Profit':'📉 Net Profit';
+  const tp2=document.getElementById('tc-pft');if(tp2)tp2.textContent=kwd(pft);
+  const tm2=document.getElementById('tc-mgn');if(tm2)tm2.textContent='Margin: '+mgn+'%  |  Income: '+kwd(inc);
+  const tv2=document.getElementById('tc-val');if(tv2){tv2.textContent=kwd(b);tv2.style.color=b>=0?'#fff':'#fca5a5';}
+  const tca2=document.getElementById('tc-cash');if(tca2)tca2.textContent='In: '+kwd(i);
+  const tco2=document.getElementById('tc-out');if(tco2)tco2.textContent='Out: '+kwd(o);
   // METRICS
   document.getElementById('d-inc').textContent=kwd(inc);document.getElementById('d-exp').textContent=kwd(ex.t);
   document.getElementById('d-pnd').textContent=kwd(totPend());document.getElementById('d-pnd2').textContent=DB.projects.filter(p=>p.status!=='Cancelled'&&prem(p)>0).length+' project(s)';
