@@ -20,6 +20,7 @@
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
 .app{display:flex;min-height:100vh}
+.srch{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;margin-bottom:14px}.srch input{flex:1;border:none;background:transparent;color:var(--text);font-size:13px;font-family:inherit;outline:none}.srch input::placeholder{color:var(--text3)}.srch-icon{color:var(--text3);font-size:14px}
 /* SIDEBAR */
 .sb{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 0;overflow-y:auto;position:sticky;top:0;height:100vh}
 .logo{padding:0 1.25rem 1.25rem;border-bottom:1px solid var(--border);margin-bottom:.8rem}
@@ -295,7 +296,7 @@ tr:hover td{background:var(--bg3)}
   <div class="cbc"><div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Cash balance</div><div class="cbv" id="cbal">KWD 0.000</div><div style="font-size:11px;opacity:.65;margin-top:5px" id="csub"></div></div>
   <div class="g3" style="margin-bottom:1.4rem"><div class="met"><div class="ml">Total in</div><div class="mv vg" id="ctin">KWD 0.000</div></div><div class="met"><div class="ml">Total out</div><div class="mv vr" id="ctout">KWD 0.000</div></div><div class="met"><div class="ml">This month net</div><div class="mv vc" id="cmn">KWD 0.000</div><div class="mh" id="cml2"></div></div></div>
   <div class="cft"><button class="cftb active" data-cf="all">All</button><button class="cftb" data-cf="in">In</button><button class="cftb" data-cf="out">Out</button></div>
-  <div class="card"><div class="tw"><table><thead><tr><th>Description</th><th>Cat</th><th>Type</th><th>Amount</th><th>Date</th><th>Ref</th><th></th></tr></thead><tbody id="ctb"></tbody></table></div></div>
+  <div class="srch"><span class="srch-icon">🔍</span><input id="sq-cash" placeholder="Search cash ledger..." oninput="srchFn('cash')"/></div><div class="card"><div class="tw"><table><thead><tr><th>Description</th><th>Cat</th><th>Type</th><th>Amount</th><th>Date</th><th>Ref</th><th></th></tr></thead><tbody id="ctb"></tbody></table></div></div>
 </div>
 
 <!-- MONTHLY -->
@@ -319,7 +320,7 @@ tr:hover td{background:var(--bg3)}
   </div>
   <div id="oh-salary" class="ohs">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px"><span style="font-size:13px;color:var(--text2)">Employees & salaries</span><div style="display:flex;gap:8px"><button class="btn" id="btn-ae">+ Add employee</button><button class="btn btn-g" id="btn-as">+ Record salary</button></div></div>
-    <div id="egrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px;margin-bottom:1.4rem"></div>
+    <div class="srch"><span class="srch-icon">🔍</span><input id="sq-emp" placeholder="Search employees..." oninput="srchFn('emp')"/></div><div id="egrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px;margin-bottom:1.4rem"></div>
     <div class="st" style="margin-top:0">Salary history</div>
     <div class="card"><div class="tw"><table><thead><tr><th>Employee</th><th>Amount</th><th>Month</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody id="stb"></tbody></table></div></div>
   </div>
@@ -329,13 +330,13 @@ tr:hover td{background:var(--bg3)}
 <div id="pg-shared" class="pg">
   <div class="ph"><div><div class="pt">Shared Materials</div></div><button class="btn btn-g" id="btn-ash">+ Add shared</button></div>
   <div class="g3" id="shsum" style="margin-bottom:1.4rem"></div>
-  <div class="card"><div class="tw"><table><thead><tr><th>Description</th><th>Cost</th><th>Date</th><th>Split</th><th></th></tr></thead><tbody id="shtb"></tbody></table></div></div>
+  <div class="srch"><span class="srch-icon">🔍</span><input id="sq-sh" placeholder="Search shared materials..." oninput="srchFn('sh')"/></div><div class="card"><div class="tw"><table><thead><tr><th>Description</th><th>Cost</th><th>Date</th><th>Split</th><th></th></tr></thead><tbody id="shtb"></tbody></table></div></div>
 </div>
 
 <!-- EXPENSES -->
 <div id="pg-expenses" class="pg">
   <div class="ph"><div><div class="pt">Expenses</div></div><div style="display:flex;gap:8px"><button class="btn btn-ai" id="btn-gsc" style="padding:7px 12px;font-size:12px">🤖 Scan invoice</button><button class="btn btn-g" id="btn-aex">+ Add expense</button></div></div>
-  <div class="card"><div class="tw"><table><thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Date</th><th></th></tr></thead><tbody id="extb"></tbody></table></div></div>
+  <div class="srch"><span class="srch-icon">🔍</span><input id="sq-exp" placeholder="Search expenses..." oninput="srchFn('exp')"/></div><div class="card"><div class="tw"><table><thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Date</th><th></th></tr></thead><tbody id="extb"></tbody></table></div></div>
 </div>
 
 <!-- CLIENT REPORTS -->
@@ -348,19 +349,19 @@ tr:hover td{background:var(--bg3)}
 <!-- PROJECTS -->
 <div id="pg-projects" class="pg">
   <div class="ph"><div><div class="pt">Projects</div></div><button class="btn btn-g" id="btn-ap">+ New project</button></div>
-  <div class="card"><div class="tw"><table><thead><tr><th>Project</th><th>Client</th><th>Value</th><th>Paid</th><th>Rem</th><th>Payment</th><th>Status</th><th>Due</th><th></th></tr></thead><tbody id="ptb"></tbody></table></div></div>
+  <div class="srch"><span class="srch-icon">🔍</span><input id="sq-proj" placeholder="Search projects..." oninput="srchFn('proj')"/></div><div class="card"><div class="tw"><table><thead><tr><th>Project</th><th>Client</th><th>Value</th><th>Paid</th><th>Rem</th><th>Payment</th><th>Status</th><th>Due</th><th></th></tr></thead><tbody id="ptb"></tbody></table></div></div>
 </div>
 
 <!-- INVOICES -->
 <div id="pg-invoices" class="pg">
   <div class="ph"><div><div class="pt">Invoices</div></div><button class="btn btn-g" id="btn-ai2">+ New invoice</button></div>
-  <div class="card"><div class="tw"><table><thead><tr><th>#</th><th>Client</th><th>Project</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody id="itb"></tbody></table></div></div>
+  <div class="srch"><span class="srch-icon">🔍</span><input id="sq-inv" placeholder="Search invoices..." oninput="srchFn('inv')"/></div><div class="card"><div class="tw"><table><thead><tr><th>#</th><th>Client</th><th>Project</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody id="itb"></tbody></table></div></div>
 </div>
 
 <!-- CLIENTS -->
 <div id="pg-clients" class="pg">
   <div class="ph"><div><div class="pt">Clients</div></div><button class="btn btn-g" id="btn-ac">+ Add client</button></div>
-  <div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Projects</th><th>Billed</th><th></th></tr></thead><tbody id="cltb"></tbody></table></div></div>
+  <div class="srch"><span class="srch-icon">🔍</span><input id="sq-cli" placeholder="Search clients..." oninput="srchFn('cli')"/></div><div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Projects</th><th>Billed</th><th></th></tr></thead><tbody id="cltb"></tbody></table></div></div>
 </div>
 
 </div></div>
@@ -565,6 +566,7 @@ document.getElementById('btn-gsc').addEventListener('click',()=>{document.queryS
 function g6m(end){const[y,m]=end.split('-').map(Number);const r=[];for(let i=5;i>=0;i--){const d=new Date(y,m-1-i,1);r.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}return r}
 function bChart(id,months,inc,exp,prf,showP){const el=document.getElementById(id);if(!months.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:.8rem 0">No data yet</div>';return}const mx=Math.max(...inc,...exp,...(showP?prf.map(Math.abs):[]),1);const H=122;el.innerHTML=months.map((mo,i)=>{const ih=Math.round(inc[i]/mx*H),eh=Math.round(exp[i]/mx*H),ph=showP?Math.round(Math.abs(prf[i])/mx*H):0;const pc=showP?(prf[i]>=0?'#378ADD':'#D85A30'):'';const lbl=new Date(mo+'-01').toLocaleDateString('en-GB',{month:'short'});return`<div class="bgr"><div class="bc" style="height:${ih}px;background:#1D9E75;opacity:.85"></div><div class="bc" style="height:${eh}px;background:#D85A30;opacity:.85"></div>${showP?`<div class="bc" style="height:${ph}px;background:${pc};opacity:.7"></div>`:''}<div class="bl">${lbl}</div></div>`}).join('')}
 // DASHBOARD
+window.srchFn=function(sec){const q=(document.getElementById('sq-'+sec)?.value||'').toLowerCase().trim();const tbMap={cash:'ctb',exp:'extb',cli:'cltb',proj:'ptb',inv:'itb',sh:'shtb'};const tbId=tbMap[sec];if(tbId){const rows=document.getElementById(tbId)?.querySelectorAll('tr')||[];rows.forEach(r=>{r.style.display=q===''||r.textContent.toLowerCase().includes(q)?'':'none';});}else if(sec==='emp'){const cards=document.getElementById('egrid')?.querySelectorAll('.card')||[];cards.forEach(c=>{c.style.display=q===''||c.textContent.toLowerCase().includes(q)?'':'none';});}};
 function rDash(){
   const aM=[...new Set([...DB.invoices,...DB.expenses,...DB.sharedExpenses].map(x=>x.date&&x.date.slice(0,7)).filter(Boolean))].sort().reverse();
   const sel=document.getElementById('df');const cv=sel.value;sel.innerHTML='<option value="all">All time</option>'+aM.map(mo=>`<option value="${mo}">${fm(mo)}</option>`).join('');if(aM.includes(cv))sel.value=cv;
