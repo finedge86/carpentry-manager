@@ -432,20 +432,14 @@ tr:hover td{background:var(--bg3)}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem"><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:600;font-size:14px;color:var(--green)">📦 Assets</div><button class="btn btn-g btn-sm" id="btn-aasset">+ Add asset</button></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Fixed Assets</div><div class="card" style="padding:0;overflow:hidden;margin-bottom:12px"><table class="tbl"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-fixed-tb"></tbody></table></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Current Assets</div><div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-current-tb"></tbody></table></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:600;font-size:14px;color:var(--red)">💳 Liabilities</div><button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" id="btn-aliab">+ Add liability</button></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Long-term Liabilities</div><div class="card" style="padding:0;overflow:hidden;margin-bottom:12px"><table class="tbl"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-longterm-tb"></tbody></table></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Short-term Liabilities</div><div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-shortterm-tb"></tbody></table></div></div></div>
 <div id="bs-equity" style="margin-bottom:1.4rem"></div>
 </div>
-<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.4rem">
+<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.4rem" id="pg-equity-card">
   <div class="st" style="margin-top:0;margin-bottom:12px">Owner's Equity (Required for XBRL)</div>
-  <div class="fr">
-    <div class="fl"><label>Opening Capital (KWD)</label><input id="eq-capital" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner's investment in business</div></div>
-    <div class="fl"><label>Drawings / Withdrawals (KWD)</label><input id="eq-drawings" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner cash taken out</div></div>
-  </div>
-  <div class="fr">
-    <div class="fl"><label>Prior Year Retained Earnings (KWD)</label><input id="eq-retained" type="number" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Profit from last year</div></div>
-    <div class="fl"><label>Prior Year Revenue (KWD)</label><input id="eq-prior-rev" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">For IFRS comparative period</div></div>
-  </div>
+  <div class="fr"><div class="fl"><label>Opening Capital (KWD)</label><input id="eq-capital" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner investment in business</div></div><div class="fl"><label>Drawings / Withdrawals (KWD)</label><input id="eq-drawings" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner cash taken out</div></div></div>
+  <div class="fr"><div class="fl"><label>Prior Year Retained Earnings (KWD)</label><input id="eq-retained" type="number" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Profit from last year</div></div><div class="fl"><label>Prior Year Revenue (KWD)</label><input id="eq-prior-rev" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">For IFRS comparative period</div></div></div>
   <button class="btn btn-g" style="margin-top:8px" onclick="saveEquityInfo()">Save Equity Info</button>
   <div id="bs-equity-summary" style="margin-top:12px"></div>
 </div>
-<div class="mb" id="m-asset"><div class="md"><div class="mt" id="m-asset-tit">Add Asset</div><div class="fl"><label>Item name *</label><input id="ast-n"/></div><div class="fr"><div class="fl"><label>Category</label><select id="ast-cat"><option value="fixed">Fixed Asset</option><option value="current">Current Asset</option></select></div><div class="fl"><label>Value (KWD) *</label><input id="ast-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date</label><input id="ast-dt" type="date"/></div><div class="fl"><label>Depreciation/yr (KWD)</label><input id="ast-dep" type="number" min="0" step=".001" placeholder="auto-calc"/></div><div class="fl"><label>Useful life (yrs)</label><input id="ast-life" type="number" min="1" max="50" placeholder="5" oninput="var v=parseFloat(document.getElementById('ast-v').value)||0;var l=parseFloat(this.value)||5;document.getElementById('ast-dep').value=(v/l).toFixed(3);"/></div></div><div class="fl"><label>Notes</label><textarea id="ast-nt"></textarea></div><div class="ma"><button class="btn" id="m-asset-x">Cancel</button><button class="btn btn-g" id="m-asset-ok">Save</button></div></div></div>
+<div class="mb" id="m-asset"><div class="md"><div class="mt" id="m-asset-tit">Add Asset</div><div class="fl"><label>Item name *</label><input id="ast-n"/></div><div class="fr"><div class="fl"><label>Category</label><select id="ast-cat"><option value="fixed">Fixed Asset</option><option value="current">Current Asset</option></select></div><div class="fl"><label>Value (KWD) *</label><input id="ast-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date</label><input id="ast-dt" type="date"/></div><div class="fl"><label>Depreciation/yr (KWD)</label><input id="ast-dep" type="number" min="0" step=".001" placeholder="auto-calc"/></div><div class="fl"><label>Useful life (yrs)</label><input id="ast-life" type="number" min="1" max="50" placeholder="5" oninput="var v=parseFloat(document.getElementById('ast-v').value)||0;var l=parseFloat(this.value)||5;document.getElementById('ast-dep').value=(v/l).toFixed(3)"/></div></div><div class="fl"><label>Notes</label><textarea id="ast-nt"></textarea></div><div class="ma"><button class="btn" id="m-asset-x">Cancel</button><button class="btn btn-g" id="m-asset-ok">Save</button></div></div></div>
 <div class="mb" id="m-liab"><div class="md"><div class="mt" id="m-liab-tit">Add Liability</div><div class="fl"><label>Item name *</label><input id="liab-n"/></div><div class="fr"><div class="fl"><label>Type</label><select id="liab-cat"><option value="longterm">Long-term</option><option value="shortterm">Short-term</option></select></div><div class="fl"><label>Amount (KWD) *</label><input id="liab-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date added</label><input id="liab-dt" type="date"/></div><div class="fl"><label>Due date</label><input id="liab-due" type="date"/></div></div><div class="fl"><label>Notes</label><textarea id="liab-nt"></textarea></div><div class="ma"><button class="btn" id="m-liab-x">Cancel</button><button class="btn btn-g" id="m-liab-ok">Save</button></div></div></div>
 <!-- MODALS -->
 <div class="mb" id="m-cash"><div class="md">
@@ -1134,164 +1128,109 @@ ${(DB.liabilities||[]).filter(l=>l.cat==='shortterm').length>0 ? '  <ifrs-sme:Cu
 };
 window.saveEquityInfo=function(){
   if(!DB.equityInfo)DB.equityInfo={};
-  DB.equityInfo.capital=parseFloat(document.getElementById('eq-capital').value)||0;
-  DB.equityInfo.drawings=parseFloat(document.getElementById('eq-drawings').value)||0;
-  DB.equityInfo.retained=parseFloat(document.getElementById('eq-retained').value)||0;
-  DB.equityInfo.priorRevenue=parseFloat(document.getElementById('eq-prior-rev').value)||0;
-  save();renderEquitySummary();alert('Equity info saved');
+  DB.equityInfo.capital=parseFloat(document.getElementById("eq-capital").value)||0;
+  DB.equityInfo.drawings=parseFloat(document.getElementById("eq-drawings").value)||0;
+  DB.equityInfo.retained=parseFloat(document.getElementById("eq-retained").value)||0;
+  DB.equityInfo.priorRevenue=parseFloat(document.getElementById("eq-prior-rev").value)||0;
+  save();renderEquitySummary();alert("Equity info saved");
 };
 window.renderEquitySummary=function(){
   var ei=DB.equityInfo||{};var pl=calcPL();
   var cap=ei.capital||0,draw=ei.drawings||0,ret=ei.retained||0,cur=pl.netProfit;
   var tot=cap+ret+cur-draw;
-  var el=document.getElementById('bs-equity-summary');if(!el)return;
-  var kf=function(v){return '<span style="font-weight:600;color:'+(v>=0?'var(--green)':'var(--red)')+'">KWD '+v.toFixed(3)+'</span>';};
-  el.innerHTML='<div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:13px">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +'<div>Opening Capital: '+kf(cap)+'</div>'
-    +'<div>Drawings: <span style="color:var(--red)">- KWD '+draw.toFixed(3)+'</span></div>'
-    +'<div>Prior Retained Earnings: '+kf(ret)+'</div>'
-    +'<div>Current Net Profit: '+kf(cur)+'</div>'
-    +'</div>'
-    +'<div style="border-top:2px solid var(--border2);margin-top:8px;padding-top:8px;font-weight:600">Total Equity: '+kf(tot)+'</div>'
-    +'</div>';
+  var el=document.getElementById("bs-equity-summary");if(!el)return;
+  var kf=function(v){return "<span style=\"font-weight:600;color:"+(v>=0?"var(--green)":"var(--red)")+"\">KWD "+v.toFixed(3)+"</span>";};
+  el.innerHTML="<div style=\"background:var(--bg2);border-radius:8px;padding:12px;font-size:13px\">"
+    +"<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px\">"
+    +"<div>Opening Capital: "+kf(cap)+"</div>"
+    +"<div>Drawings: <span style=\"color:var(--red)\">- KWD "+draw.toFixed(3)+"</span></div>"
+    +"<div>Prior Retained Earnings: "+kf(ret)+"</div>"
+    +"<div>Current Net Profit: "+kf(cur)+"</div>"
+    +"</div>"
+    +"<div style=\"border-top:2px solid var(--border2);margin-top:8px;padding-top:8px;font-weight:600\">Total Equity: "+kf(tot)+"</div>"
+    +"</div>";
 };
 window.calcCashFlow=function(){
   var txs=DB.cashTransactions||[];
-  var op=txs.filter(function(t){return !t.flowType||t.flowType==='operating';});
-  var inv=txs.filter(function(t){return t.flowType==='investing';});
-  var fin=txs.filter(function(t){return t.flowType==='financing';});
-  var sum=function(arr){return arr.reduce(function(s,t){return s+(t.type==='in'?t.amount:-t.amount);},0);};
+  var op=txs.filter(function(t){return !t.flowType||t.flowType==="operating";});
+  var inv=txs.filter(function(t){return t.flowType==="investing";});
+  var fin=txs.filter(function(t){return t.flowType==="financing";});
+  var sum=function(arr){return arr.reduce(function(s,t){return s+(t.type==="in"?t.amount:-t.amount);},0);};
   return {operatingNet:sum(op),investingNet:sum(inv),financingNet:sum(fin),netChange:sum(txs)};
 };
-window.saveEquityInfo_load=function(){
+window.loadEquityFields=function(){
   var ei=DB.equityInfo||{};
-  var sv=function(id,v){var el=document.getElementById(id);if(el)el.value=v||'';};
-  sv('eq-capital',ei.capital||'');sv('eq-drawings',ei.drawings||'');
-  sv('eq-retained',ei.retained||'');sv('eq-prior-rev',ei.priorRevenue||'');
+  var sv=function(id,v){var el=document.getElementById(id);if(el)el.value=v||"";};
+  sv("eq-capital",ei.capital||"");sv("eq-drawings",ei.drawings||"");
+  sv("eq-retained",ei.retained||"");sv("eq-prior-rev",ei.priorRevenue||"");
   renderEquitySummary();
 };
-// Override rBalSheet to also load equity
-var _origRBS=window.rBalSheet;
-window.rBalSheet=function(){if(_origRBS)_origRBS();window.saveEquityInfo_load();};
-// Override exportXBRL with full version
+var _origRBS2=window.rBalSheet;
+window.rBalSheet=function(){if(_origRBS2)_origRBS2();window.loadEquityFields();};
 window.exportXBRL=function(){
   var pl=calcPL();var cf=calcCashFlow();
   var ei=DB.entityInfo||{};var eq=DB.equityInfo||{};
-  var nameEn=ei.nameEn||'Fine Edge Carpentry';
-  var civilId=ei.civilId||'ENTER-CIVIL-ID';
-  var fyStart=ei.fyStart||(new Date().getFullYear()+'-01-01');
-  var fyEnd=ei.fyEnd||(new Date().getFullYear()+'-12-31');
-  var today=new Date().toISOString().split('T')[0];
+  var nameEn=ei.nameEn||"Fine Edge Carpentry";
+  var cid=ei.civilId||"ENTER-CIVIL-ID";
+  var fys=ei.fyStart||(new Date().getFullYear()+"-01-01");
+  var fye=ei.fyEnd||(new Date().getFullYear()+"-12-31");
+  var today=new Date().toISOString().split("T")[0];
   var cap=eq.capital||0,draw=eq.drawings||0,ret=eq.retained||0;
-  var totalEquity=cap+ret+pl.netProfit-draw;
-  var fixedA=(DB.assets||[]).filter(function(a){return a.cat==='fixed';});
-  var ppeCost=fixedA.reduce(function(s,a){return s+a.value;},0);
-  var ppeDep=fixedA.reduce(function(s,a){return s+(a.depreciation||0);},0);
-  var ppeNet=ppeCost-ppeDep;
-  var totalA=pl.cash+pl.receivables+(DB.assets||[]).reduce(function(s,a){return s+a.value;},0);
-  var totalL=(DB.liabilities||[]).reduce(function(s,l){return s+l.value;},0);
-  var dec='3';
-  var x='<?xml version="1.0" encoding="UTF-8"?>';
-  x+='
-<!-- XBRL Instance Document - IFRS for SMEs';
-  x+='
-     Entity: '+nameEn+' | Civil ID: '+civilId;
-  x+='
-     Period: '+fyStart+' to '+fyEnd+' | Generated: '+today;
-  x+='
-     For upload to: Kuwait Business Center - Qayd System -->';
-  x+='
-<xbrl xmlns="http://www.xbrl.org/2003/instance"';
-  x+='
-  xmlns:xbrli="http://www.xbrl.org/2003/instance"';
-  x+='
-  xmlns:iso4217="http://www.xbrl.org/2003/iso4217"';
-  x+='
-  xmlns:ifrs-sme="http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme"';
-  x+='
-  xmlns:dei="http://xbrl.sec.gov/dei/2021">';
-  x+='
-  <xbrli:context id="CurrentPeriod"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+civilId+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>'+fyStart+'</xbrli:startDate><xbrli:endDate>'+fyEnd+'</xbrli:endDate></xbrli:period></xbrli:context>';
-  x+='
-  <xbrli:context id="PeriodEnd"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+civilId+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>'+fyEnd+'</xbrli:instant></xbrli:period></xbrli:context>';
-  x+='
-  <xbrli:unit id="KWD"><xbrli:measure>iso4217:KWD</xbrli:measure></xbrli:unit>';
-  x+='
-  <!-- ENTITY -->';
-  x+='
-  <dei:EntityRegistrantName contextRef="CurrentPeriod">'+nameEn+'</dei:EntityRegistrantName>';
-  x+='
-  <dei:EntityCentralIndexKey contextRef="CurrentPeriod">'+civilId+'</dei:EntityCentralIndexKey>';
-  x+='
-  <dei:DocumentPeriodEndDate contextRef="CurrentPeriod">'+fyEnd+'</dei:DocumentPeriodEndDate>';
-  x+='
-  <dei:DocumentType contextRef="CurrentPeriod">Annual</dei:DocumentType>';
-  x+='
-  <!-- INCOME STATEMENT -->';
-  x+='
-  <ifrs-sme:Revenue contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.revenue.toFixed(3)+'</ifrs-sme:Revenue>';
-  x+='
-  <ifrs-sme:OtherIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.cashRevenue.toFixed(3)+'</ifrs-sme:OtherIncome>';
-  x+='
-  <ifrs-sme:CostOfSales contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.costOfSales.toFixed(3)+'</ifrs-sme:CostOfSales>';
-  x+='
-  <ifrs-sme:GrossProfit contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.grossProfit.toFixed(3)+'</ifrs-sme:GrossProfit>';
-  x+='
-  <ifrs-sme:EmployeeBenefitsExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.salaries.toFixed(3)+'</ifrs-sme:EmployeeBenefitsExpense>';
-  x+='
-  <ifrs-sme:RentalExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.rent.toFixed(3)+'</ifrs-sme:RentalExpense>';
-  x+='
-  <ifrs-sme:DepreciationAndAmortisation contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+ppeDep.toFixed(3)+'</ifrs-sme:DepreciationAndAmortisation>';
-  x+='
-  <ifrs-sme:OtherExpenses contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+(pl.shared+pl.otherExp).toFixed(3)+'</ifrs-sme:OtherExpenses>';
-  x+='
-  <ifrs-sme:ProfitLoss contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+pl.netProfit.toFixed(3)+'</ifrs-sme:ProfitLoss>';
-  x+='
-  <ifrs-sme:NumberOfEmployees contextRef="CurrentPeriod" decimals="0">'+(DB.employees||[]).length+'</ifrs-sme:NumberOfEmployees>';
-  x+='
-  <!-- BALANCE SHEET -->';
-  x+='
-  <ifrs-sme:PropertyPlantAndEquipmentGross contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+ppeCost.toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipmentGross>';
-  x+='
-  <ifrs-sme:AccumulatedDepreciationAndAmortisation contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+ppeDep.toFixed(3)+'</ifrs-sme:AccumulatedDepreciationAndAmortisation>';
-  x+='
-  <ifrs-sme:PropertyPlantAndEquipmentNet contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+ppeNet.toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipmentNet>';
-  x+='
-  <ifrs-sme:CashAndCashEquivalents contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+pl.cash.toFixed(3)+'</ifrs-sme:CashAndCashEquivalents>';
-  x+='
-  <ifrs-sme:TradeAndOtherReceivables contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+pl.receivables.toFixed(3)+'</ifrs-sme:TradeAndOtherReceivables>';
-  x+='
-  <ifrs-sme:Assets contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+totalA.toFixed(3)+'</ifrs-sme:Assets>';
-  x+='
-  <ifrs-sme:Liabilities contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+totalL.toFixed(3)+'</ifrs-sme:Liabilities>';
-  x+='
-  <!-- EQUITY -->';
-  x+='
-  <ifrs-sme:IssuedCapital contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+cap.toFixed(3)+'</ifrs-sme:IssuedCapital>';
-  x+='
-  <ifrs-sme:RetainedEarnings contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+(ret+pl.netProfit).toFixed(3)+'</ifrs-sme:RetainedEarnings>';
-  x+='
-  <ifrs-sme:DividendsRecognisedAsDistributions contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+draw.toFixed(3)+'</ifrs-sme:DividendsRecognisedAsDistributions>';
-  x+='
-  <ifrs-sme:Equity contextRef="PeriodEnd" unitRef="KWD" decimals="'+dec+'">'+totalEquity.toFixed(3)+'</ifrs-sme:Equity>';
-  x+='
-  <!-- CASH FLOW STATEMENT (IAS 7) -->';
-  x+='
-  <ifrs-sme:CashFlowsFromUsedInOperatingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+cf.operatingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInOperatingActivities>';
-  x+='
-  <ifrs-sme:CashFlowsFromUsedInInvestingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+cf.investingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInInvestingActivities>';
-  x+='
-  <ifrs-sme:CashFlowsFromUsedInFinancingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+cf.financingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInFinancingActivities>';
-  x+='
-  <ifrs-sme:IncreaseDecreaseInCashAndCashEquivalents contextRef="CurrentPeriod" unitRef="KWD" decimals="'+dec+'">'+cf.netChange.toFixed(3)+'</ifrs-sme:IncreaseDecreaseInCashAndCashEquivalents>';
-  x+='
-</xbrl>';
-  var blob=new Blob([x],{type:'application/xml;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=(nameEn.replace(/s+/g,'_'))+'_XBRL_IFRS_'+fyEnd+'.xml';a.click();
-  alert('XBRL XML downloaded. Upload to Kuwait Business Center - Qayd System');
+  var teq=cap+ret+pl.netProfit-draw;
+  var fa=(DB.assets||[]).filter(function(a){return a.cat==="fixed";});
+  var ppec=fa.reduce(function(s,a){return s+a.value;},0);
+  var pped=fa.reduce(function(s,a){return s+(a.depreciation||0);},0);
+  var ppen=ppec-pped;
+  var tA=pl.cash+pl.receivables+(DB.assets||[]).reduce(function(s,a){return s+a.value;},0);
+  var tL=(DB.liabilities||[]).reduce(function(s,l){return s+l.value;},0);
+  var d="3";
+  var x="";
+  x+='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!-- XBRL IFRS-SME | '+nameEn+' | '+cid+' | '+fys+' to '+fye+' | Generated:'+today+' -->\n';
+  x+='<xbrl xmlns="http://www.xbrl.org/2003/instance"\n';
+  x+='  xmlns:xbrli="http://www.xbrl.org/2003/instance"\n';
+  x+='  xmlns:iso4217="http://www.xbrl.org/2003/iso4217"\n';
+  x+='  xmlns:ifrs-sme="http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme"\n';
+  x+='  xmlns:dei="http://xbrl.sec.gov/dei/2021">\n\n';
+  x+='  <xbrli:context id="CurrentPeriod"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+cid+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>'+fys+'</xbrli:startDate><xbrli:endDate>'+fye+'</xbrli:endDate></xbrli:period></xbrli:context>\n';
+  x+='  <xbrli:context id="PeriodEnd"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+cid+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>'+fye+'</xbrli:instant></xbrli:period></xbrli:context>\n';
+  x+='  <xbrli:unit id="KWD"><xbrli:measure>iso4217:KWD</xbrli:measure></xbrli:unit>\n';
+  x+='  <dei:EntityRegistrantName contextRef="CurrentPeriod">'+nameEn+'</dei:EntityRegistrantName>\n';
+  x+='  <dei:EntityCentralIndexKey contextRef="CurrentPeriod">'+cid+'</dei:EntityCentralIndexKey>\n';
+  x+='  <dei:DocumentPeriodEndDate contextRef="CurrentPeriod">'+fye+'</dei:DocumentPeriodEndDate>\n';
+  x+='  <dei:DocumentType contextRef="CurrentPeriod">Annual</dei:DocumentType>\n';
+  x+='  <ifrs-sme:Revenue contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.revenue.toFixed(3)+'</ifrs-sme:Revenue>\n';
+  x+='  <ifrs-sme:OtherIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.cashRevenue.toFixed(3)+'</ifrs-sme:OtherIncome>\n';
+  x+='  <ifrs-sme:CostOfSales contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.costOfSales.toFixed(3)+'</ifrs-sme:CostOfSales>\n';
+  x+='  <ifrs-sme:GrossProfit contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.grossProfit.toFixed(3)+'</ifrs-sme:GrossProfit>\n';
+  x+='  <ifrs-sme:EmployeeBenefitsExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.salaries.toFixed(3)+'</ifrs-sme:EmployeeBenefitsExpense>\n';
+  x+='  <ifrs-sme:RentalExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.rent.toFixed(3)+'</ifrs-sme:RentalExpense>\n';
+  x+='  <ifrs-sme:DepreciationAndAmortisation contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pped.toFixed(3)+'</ifrs-sme:DepreciationAndAmortisation>\n';
+  x+='  <ifrs-sme:OtherExpenses contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+( pl.shared+pl.otherExp).toFixed(3)+'</ifrs-sme:OtherExpenses>\n';
+  x+='  <ifrs-sme:ProfitLoss contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.netProfit.toFixed(3)+'</ifrs-sme:ProfitLoss>\n';
+  x+='  <ifrs-sme:NumberOfEmployees contextRef="CurrentPeriod" decimals="0">'+( DB.employees||[]).length+'</ifrs-sme:NumberOfEmployees>\n';
+  x+='  <ifrs-sme:PropertyPlantAndEquipmentGross contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+ppec.toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipmentGross>\n';
+  x+='  <ifrs-sme:AccumulatedDepreciationAndAmortisation contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+pped.toFixed(3)+'</ifrs-sme:AccumulatedDepreciationAndAmortisation>\n';
+  x+='  <ifrs-sme:PropertyPlantAndEquipmentNet contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+ppen.toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipmentNet>\n';
+  x+='  <ifrs-sme:CashAndCashEquivalents contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+pl.cash.toFixed(3)+'</ifrs-sme:CashAndCashEquivalents>\n';
+  x+='  <ifrs-sme:TradeAndOtherReceivables contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+pl.receivables.toFixed(3)+'</ifrs-sme:TradeAndOtherReceivables>\n';
+  x+='  <ifrs-sme:Assets contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+tA.toFixed(3)+'</ifrs-sme:Assets>\n';
+  x+='  <ifrs-sme:Liabilities contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+tL.toFixed(3)+'</ifrs-sme:Liabilities>\n';
+  x+='  <ifrs-sme:IssuedCapital contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+cap.toFixed(3)+'</ifrs-sme:IssuedCapital>\n';
+  x+='  <ifrs-sme:RetainedEarnings contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+( ret+pl.netProfit).toFixed(3)+'</ifrs-sme:RetainedEarnings>\n';
+  x+='  <ifrs-sme:DividendsRecognisedAsDistributions contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+draw.toFixed(3)+'</ifrs-sme:DividendsRecognisedAsDistributions>\n';
+  x+='  <ifrs-sme:Equity contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+teq.toFixed(3)+'</ifrs-sme:Equity>\n';
+  x+='  <ifrs-sme:CashFlowsFromUsedInOperatingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+cf.operatingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInOperatingActivities>\n';
+  x+='  <ifrs-sme:CashFlowsFromUsedInInvestingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+cf.investingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInInvestingActivities>\n';
+  x+='  <ifrs-sme:CashFlowsFromUsedInFinancingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+cf.financingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInFinancingActivities>\n';
+  x+='  <ifrs-sme:IncreaseDecreaseInCashAndCashEquivalents contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+cf.netChange.toFixed(3)+'</ifrs-sme:IncreaseDecreaseInCashAndCashEquivalents>\n';
+  x+='</xbrl>';
+  var blob=new Blob([x],{type:"application/xml;charset=utf-8"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=(nameEn.replace(/\s+/g,"_"))+"_XBRL_IFRS_"+fye+".xml";a.click();
+  alert("XBRL XML downloaded. Upload to Kuwait Business Center - Qayd System");
 };
+
 </script>
 </body>
 </html>
