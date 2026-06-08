@@ -431,6 +431,95 @@ tr:hover td{background:var(--bg3)}
 <div class="g3" id="bs-summary" style="margin-bottom:1.4rem"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem"><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:600;font-size:14px;color:var(--green)">📦 Assets</div><button class="btn btn-g btn-sm" id="btn-aasset">+ Add asset</button></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Fixed Assets</div><div class="card" style="padding:0;overflow:hidden;margin-bottom:12px"><table class="tbl"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-fixed-tb"></tbody></table></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Current Assets</div><div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-current-tb"></tbody></table></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:600;font-size:14px;color:var(--red)">💳 Liabilities</div><button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" id="btn-aliab">+ Add liability</button></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Long-term Liabilities</div><div class="card" style="padding:0;overflow:hidden;margin-bottom:12px"><table class="tbl"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-longterm-tb"></tbody></table></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Short-term Liabilities</div><div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-shortterm-tb"></tbody></table></div></div></div>
 <div id="bs-equity" style="margin-bottom:1.4rem"></div>
+
+<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.4rem" id="pg-equity-card">
+  <div class="st" style="margin-top:0;margin-bottom:12px">Owner's Equity (Required for XBRL)</div>
+  <div class="fr"><div class="fl"><label>Opening Capital (KWD)</label><input id="eq-capital" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner investment in business</div></div><div class="fl"><label>Drawings / Withdrawals (KWD)</label><input id="eq-drawings" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner cash taken out</div></div></div>
+  <div class="fr"><div class="fl"><label>Prior Year Retained Earnings (KWD)</label><input id="eq-retained" type="number" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Profit from last year</div></div><div class="fl"><label>Prior Year Revenue (KWD)</label><input id="eq-prior-rev" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">For IFRS comparative period</div></div></div>
+  <button class="btn btn-g" style="margin-top:8px" onclick="saveEquityInfo()">Save Equity Info</button>
+  <div id="bs-equity-summary" style="margin-top:12px"></div>
+</div>
+<div class="mb" id="m-asset"><div class="md"><div class="mt" id="m-asset-tit">Add Asset</div><div class="fl"><label>Item name *</label><input id="ast-n"/></div><div class="fr"><div class="fl"><label>Category</label><select id="ast-cat"><option value="fixed">Fixed Asset</option><option value="current">Current Asset</option></select></div><div class="fl"><label>Value (KWD) *</label><input id="ast-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date</label><input id="ast-dt" type="date"/></div><div class="fl"><label>Depreciation/yr (KWD)</label><input id="ast-dep" type="number" min="0" step=".001" placeholder="auto-calc"/></div><div class="fl"><label>Useful life (yrs)</label><input id="ast-life" type="number" min="1" max="50" placeholder="5" oninput="var v=parseFloat(document.getElementById('ast-v').value)||0;var l=parseFloat(this.value)||5;document.getElementById('ast-dep').value=(v/l).toFixed(3)"/></div></div><div class="fl"><label>Notes</label><textarea id="ast-nt"></textarea></div><div class="ma"><button class="btn" id="m-asset-x">Cancel</button><button class="btn btn-g" id="m-asset-ok">Save</button></div></div></div>
+<div class="mb" id="m-liab"><div class="md"><div class="mt" id="m-liab-tit">Add Liability</div><div class="fl"><label>Item name *</label><input id="liab-n"/></div><div class="fr"><div class="fl"><label>Type</label><select id="liab-cat"><option value="longterm">Long-term</option><option value="shortterm">Short-term</option></select></div><div class="fl"><label>Amount (KWD) *</label><input id="liab-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date added</label><input id="liab-dt" type="date"/></div><div class="fl"><label>Due date</label><input id="liab-due" type="date"/></div></div><div class="fl"><label>Notes</label><textarea id="liab-nt"></textarea></div><div class="ma"><button class="btn" id="m-liab-x">Cancel</button><button class="btn btn-g" id="m-liab-ok">Save</button></div></div></div>
+<!-- MODALS -->
+<div class="mb" id="m-cash"><div class="md">
+  <div class="mt" id="mcst">Cash</div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem"><button class="btn btn-i" id="ctib" style="flex:1">💵 Cash In</button><button class="btn" id="ctob" style="flex:1">💸 Cash Out</button></div>
+  <div class="fl"><label>Description *</label><input id="ca-d"/></div>
+  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="ca-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="ca-dt" type="date"/></div></div>
+  <div class="fr"><div class="fl"><label>Category</label><select id="ca-c"></select></div><div class="fl"><label>Reference</label><input id="ca-r"/></div></div>
+  <div class="fl"><label>Cash Flow Type (IAS 7 - for XBRL)</label><select id="ca-flow"><option value="operating">Operating - day-to-day business</option><option value="investing">Investing - buy/sell assets</option><option value="financing">Financing - loans, owner capital</option></select></div>
+  <div class="fl" id="ca-proj-row" style="display:none"><label>Link to project (creates paid invoice)</label><select id="ca-proj"><option value="">— none —</option></select></div>
+  <div class="fl"><label>Notes</label><textarea id="ca-n"></textarea></div>
+  <div class="ma"><button class="btn" id="m-cash-x">Cancel</button><button class="btn btn-g" id="m-cash-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-rent"><div class="md">
+  <div class="mt" id="mrtit">Add rent payment</div>
+  <div class="fl"><label>Description</label><input id="r-d"/></div>
+  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="r-a" type="number" min="0" step=".001"/></div><div class="fl"><label>For month</label><input id="r-m" type="month"/></div></div>
+  <div class="fl"><label>Date paid</label><input id="r-dt" type="date"/></div>
+  <div class="ma"><button class="btn" id="m-rent-x">Cancel</button><button class="btn btn-g" id="m-rent-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-emp"><div class="md">
+  <div class="mt" id="metit">Add employee</div>
+  <div class="fl"><label>Full name *</label><input id="em-n"/></div>
+  <div class="fr"><div class="fl"><label>Role</label><input id="em-r"/></div><div class="fl"><label>Base salary (KWD/mo)</label><input id="em-s" type="number" min="0" step=".001"/></div></div>
+  <div class="fl"><label>Phone</label><input id="em-p"/></div>
+  <div class="ma"><button class="btn" id="m-emp-x">Cancel</button><button class="btn btn-g" id="m-emp-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-sal"><div class="md">
+  <div class="mt" id="mstit">Record salary</div>
+  <div class="fr"><div class="fl"><label>Employee</label><select id="s-e"></select></div><div class="fl"><label>Amount (KWD) *</label><input id="s-a" type="number" min="0" step=".001"/></div></div>
+  <div class="fr"><div class="fl"><label>For month</label><input id="s-m" type="month"/></div><div class="fl"><label>Date paid</label><input id="s-dt" type="date"/></div></div>
+  <div class="fl"><label>Notes</label><textarea id="s-n"></textarea></div>
+  <div class="ma"><button class="btn" id="m-sal-x">Cancel</button><button class="btn btn-g" id="m-sal-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-sh"><div class="md">
+  <div class="mt" id="mshtit">Add shared expense</div>
+  <div class="fl"><label>Description *</label><input id="sh-d"/></div>
+  <div class="fr"><div class="fl"><label>Cost (KWD) *</label><input id="sh-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="sh-dt" type="date"/></div></div>
+  <div class="fl"><label>Category</label><select id="sh-c"><option>Materials</option><option>Tools</option><option>Other</option></select></div>
+  <div class="fl"><label>Project splits</label><div id="sprows"></div><button class="btn btn-sm" id="btn-addsp" style="margin-top:5px">+ Add split</button><div style="font-size:11px;color:var(--text3);margin-top:5px" id="spth"></div></div>
+  <div class="ma"><button class="btn" id="m-sh-x">Cancel</button><button class="btn btn-g" id="m-sh-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-proj"><div class="md">
+  <div class="mt" id="mptit">New project</div>
+  <div class="fl"><label>Project name *</label><input id="p-n"/></div>
+  <div class="fr"><div class="fl"><label>Client</label><select id="p-cl"></select></div><div class="fl"><label>Value (KWD)</label><input id="p-v" type="number" min="0" step=".001"/></div></div>
+  <div class="fr"><div class="fl"><label>Start date</label><input id="p-s" type="date"/></div><div class="fl"><label>Due date</label><input id="p-d" type="date"/></div></div>
+  <div class="fl" style="max-width:180px"><label>Entry Date</label><input id="p-dt" type="date"/></div>
+  <div class="fl"><label>Status</label><select id="p-st"><option>Open</option><option>In progress</option><option>Done</option><option>Cancelled</option></select></div>
+  <div class="fl"><label>Notes</label><textarea id="p-nt"></textarea></div>
+  <div class="ma"><button class="btn" id="m-proj-x">Cancel</button><button class="btn btn-g" id="m-proj-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-inv"><div class="md">
+  <div class="mt" id="miitit">New invoice</div>
+  <div class="fr"><div class="fl"><label>Client</label><select id="i-cl"></select></div><div class="fl"><label>Project</label><select id="i-pr"></select></div></div>
+  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="i-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="i-dt" type="date"/></div></div>
+  <div class="fl"><label>Status</label><select id="i-st"><option>Pending</option><option>Paid</option><option>Overdue</option></select></div>
+  <div class="fl"><label>Notes</label><textarea id="i-nt"></textarea></div>
+  <div class="ma"><button class="btn" id="m-inv-x">Cancel</button><button class="btn btn-g" id="m-inv-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-exp"><div class="md">
+  <div class="mt" id="mextit">Add expense</div>
+  <div class="fl"><label>Description *</label><input id="e-d"/></div>
+  <div class="fl"><label>Supplier / Vendor</label><input id="e-sup" placeholder="e.g. Al-Mulla Hardware (optional)"/></div>
+  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="e-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="e-dt" type="date"/></div></div>
+  <div class="fr"><div class="fl"><label>Category</label><select id="e-c"><option>Materials</option><option>Tools</option><option>Labor</option><option>Transport</option><option>Utilities</option><option>Other</option></select></div><div class="fl"><label>Project</label><select id="e-pr"></select></div></div>
+  <div class="ma"><button class="btn" id="m-exp-x">Cancel</button><button class="btn btn-g" id="m-exp-ok">Save</button></div>
+</div></div>
+<div class="mb" id="m-cli"><div class="md">
+  <div class="mt" id="mclitit">Add client</div>
+  <div class="fl"><label>Full name *</label><input id="c-n"/></div>
+  <div class="fr"><div class="fl"><label>Phone</label><input id="c-p"/></div><div class="fl"><label>Area</label><input id="c-a"/></div></div>
+  <div class="fl"><label>Entry Date</label><input id="c-dt" type="date"/></div>
+  <div class="fl"><label>Notes</label><textarea id="c-nt"></textarea></div>
+  <div class="ma"><button class="btn" id="m-cli-x">Cancel</button><button class="btn btn-g" id="m-cli-ok">Save</button></div></div></div>
+
+
+<!-- BALANCE SHEET -->
+
+</div>
 </div>
 
 
@@ -1146,92 +1235,3 @@ window.exportXBRL=function(){
 </script>
 </body>
 </html>
-<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.4rem" id="pg-equity-card">
-  <div class="st" style="margin-top:0;margin-bottom:12px">Owner's Equity (Required for XBRL)</div>
-  <div class="fr"><div class="fl"><label>Opening Capital (KWD)</label><input id="eq-capital" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner investment in business</div></div><div class="fl"><label>Drawings / Withdrawals (KWD)</label><input id="eq-drawings" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner cash taken out</div></div></div>
-  <div class="fr"><div class="fl"><label>Prior Year Retained Earnings (KWD)</label><input id="eq-retained" type="number" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Profit from last year</div></div><div class="fl"><label>Prior Year Revenue (KWD)</label><input id="eq-prior-rev" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">For IFRS comparative period</div></div></div>
-  <button class="btn btn-g" style="margin-top:8px" onclick="saveEquityInfo()">Save Equity Info</button>
-  <div id="bs-equity-summary" style="margin-top:12px"></div>
-</div>
-<div class="mb" id="m-asset"><div class="md"><div class="mt" id="m-asset-tit">Add Asset</div><div class="fl"><label>Item name *</label><input id="ast-n"/></div><div class="fr"><div class="fl"><label>Category</label><select id="ast-cat"><option value="fixed">Fixed Asset</option><option value="current">Current Asset</option></select></div><div class="fl"><label>Value (KWD) *</label><input id="ast-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date</label><input id="ast-dt" type="date"/></div><div class="fl"><label>Depreciation/yr (KWD)</label><input id="ast-dep" type="number" min="0" step=".001" placeholder="auto-calc"/></div><div class="fl"><label>Useful life (yrs)</label><input id="ast-life" type="number" min="1" max="50" placeholder="5" oninput="var v=parseFloat(document.getElementById('ast-v').value)||0;var l=parseFloat(this.value)||5;document.getElementById('ast-dep').value=(v/l).toFixed(3)"/></div></div><div class="fl"><label>Notes</label><textarea id="ast-nt"></textarea></div><div class="ma"><button class="btn" id="m-asset-x">Cancel</button><button class="btn btn-g" id="m-asset-ok">Save</button></div></div></div>
-<div class="mb" id="m-liab"><div class="md"><div class="mt" id="m-liab-tit">Add Liability</div><div class="fl"><label>Item name *</label><input id="liab-n"/></div><div class="fr"><div class="fl"><label>Type</label><select id="liab-cat"><option value="longterm">Long-term</option><option value="shortterm">Short-term</option></select></div><div class="fl"><label>Amount (KWD) *</label><input id="liab-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date added</label><input id="liab-dt" type="date"/></div><div class="fl"><label>Due date</label><input id="liab-due" type="date"/></div></div><div class="fl"><label>Notes</label><textarea id="liab-nt"></textarea></div><div class="ma"><button class="btn" id="m-liab-x">Cancel</button><button class="btn btn-g" id="m-liab-ok">Save</button></div></div></div>
-<!-- MODALS -->
-<div class="mb" id="m-cash"><div class="md">
-  <div class="mt" id="mcst">Cash</div>
-  <div style="display:flex;gap:8px;margin-bottom:1rem"><button class="btn btn-i" id="ctib" style="flex:1">💵 Cash In</button><button class="btn" id="ctob" style="flex:1">💸 Cash Out</button></div>
-  <div class="fl"><label>Description *</label><input id="ca-d"/></div>
-  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="ca-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="ca-dt" type="date"/></div></div>
-  <div class="fr"><div class="fl"><label>Category</label><select id="ca-c"></select></div><div class="fl"><label>Reference</label><input id="ca-r"/></div></div>
-  <div class="fl"><label>Cash Flow Type (IAS 7 - for XBRL)</label><select id="ca-flow"><option value="operating">Operating - day-to-day business</option><option value="investing">Investing - buy/sell assets</option><option value="financing">Financing - loans, owner capital</option></select></div>
-  <div class="fl" id="ca-proj-row" style="display:none"><label>Link to project (creates paid invoice)</label><select id="ca-proj"><option value="">— none —</option></select></div>
-  <div class="fl"><label>Notes</label><textarea id="ca-n"></textarea></div>
-  <div class="ma"><button class="btn" id="m-cash-x">Cancel</button><button class="btn btn-g" id="m-cash-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-rent"><div class="md">
-  <div class="mt" id="mrtit">Add rent payment</div>
-  <div class="fl"><label>Description</label><input id="r-d"/></div>
-  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="r-a" type="number" min="0" step=".001"/></div><div class="fl"><label>For month</label><input id="r-m" type="month"/></div></div>
-  <div class="fl"><label>Date paid</label><input id="r-dt" type="date"/></div>
-  <div class="ma"><button class="btn" id="m-rent-x">Cancel</button><button class="btn btn-g" id="m-rent-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-emp"><div class="md">
-  <div class="mt" id="metit">Add employee</div>
-  <div class="fl"><label>Full name *</label><input id="em-n"/></div>
-  <div class="fr"><div class="fl"><label>Role</label><input id="em-r"/></div><div class="fl"><label>Base salary (KWD/mo)</label><input id="em-s" type="number" min="0" step=".001"/></div></div>
-  <div class="fl"><label>Phone</label><input id="em-p"/></div>
-  <div class="ma"><button class="btn" id="m-emp-x">Cancel</button><button class="btn btn-g" id="m-emp-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-sal"><div class="md">
-  <div class="mt" id="mstit">Record salary</div>
-  <div class="fr"><div class="fl"><label>Employee</label><select id="s-e"></select></div><div class="fl"><label>Amount (KWD) *</label><input id="s-a" type="number" min="0" step=".001"/></div></div>
-  <div class="fr"><div class="fl"><label>For month</label><input id="s-m" type="month"/></div><div class="fl"><label>Date paid</label><input id="s-dt" type="date"/></div></div>
-  <div class="fl"><label>Notes</label><textarea id="s-n"></textarea></div>
-  <div class="ma"><button class="btn" id="m-sal-x">Cancel</button><button class="btn btn-g" id="m-sal-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-sh"><div class="md">
-  <div class="mt" id="mshtit">Add shared expense</div>
-  <div class="fl"><label>Description *</label><input id="sh-d"/></div>
-  <div class="fr"><div class="fl"><label>Cost (KWD) *</label><input id="sh-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="sh-dt" type="date"/></div></div>
-  <div class="fl"><label>Category</label><select id="sh-c"><option>Materials</option><option>Tools</option><option>Other</option></select></div>
-  <div class="fl"><label>Project splits</label><div id="sprows"></div><button class="btn btn-sm" id="btn-addsp" style="margin-top:5px">+ Add split</button><div style="font-size:11px;color:var(--text3);margin-top:5px" id="spth"></div></div>
-  <div class="ma"><button class="btn" id="m-sh-x">Cancel</button><button class="btn btn-g" id="m-sh-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-proj"><div class="md">
-  <div class="mt" id="mptit">New project</div>
-  <div class="fl"><label>Project name *</label><input id="p-n"/></div>
-  <div class="fr"><div class="fl"><label>Client</label><select id="p-cl"></select></div><div class="fl"><label>Value (KWD)</label><input id="p-v" type="number" min="0" step=".001"/></div></div>
-  <div class="fr"><div class="fl"><label>Start date</label><input id="p-s" type="date"/></div><div class="fl"><label>Due date</label><input id="p-d" type="date"/></div></div>
-  <div class="fl" style="max-width:180px"><label>Entry Date</label><input id="p-dt" type="date"/></div>
-  <div class="fl"><label>Status</label><select id="p-st"><option>Open</option><option>In progress</option><option>Done</option><option>Cancelled</option></select></div>
-  <div class="fl"><label>Notes</label><textarea id="p-nt"></textarea></div>
-  <div class="ma"><button class="btn" id="m-proj-x">Cancel</button><button class="btn btn-g" id="m-proj-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-inv"><div class="md">
-  <div class="mt" id="miitit">New invoice</div>
-  <div class="fr"><div class="fl"><label>Client</label><select id="i-cl"></select></div><div class="fl"><label>Project</label><select id="i-pr"></select></div></div>
-  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="i-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="i-dt" type="date"/></div></div>
-  <div class="fl"><label>Status</label><select id="i-st"><option>Pending</option><option>Paid</option><option>Overdue</option></select></div>
-  <div class="fl"><label>Notes</label><textarea id="i-nt"></textarea></div>
-  <div class="ma"><button class="btn" id="m-inv-x">Cancel</button><button class="btn btn-g" id="m-inv-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-exp"><div class="md">
-  <div class="mt" id="mextit">Add expense</div>
-  <div class="fl"><label>Description *</label><input id="e-d"/></div>
-  <div class="fl"><label>Supplier / Vendor</label><input id="e-sup" placeholder="e.g. Al-Mulla Hardware (optional)"/></div>
-  <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="e-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="e-dt" type="date"/></div></div>
-  <div class="fr"><div class="fl"><label>Category</label><select id="e-c"><option>Materials</option><option>Tools</option><option>Labor</option><option>Transport</option><option>Utilities</option><option>Other</option></select></div><div class="fl"><label>Project</label><select id="e-pr"></select></div></div>
-  <div class="ma"><button class="btn" id="m-exp-x">Cancel</button><button class="btn btn-g" id="m-exp-ok">Save</button></div>
-</div></div>
-<div class="mb" id="m-cli"><div class="md">
-  <div class="mt" id="mclitit">Add client</div>
-  <div class="fl"><label>Full name *</label><input id="c-n"/></div>
-  <div class="fr"><div class="fl"><label>Phone</label><input id="c-p"/></div><div class="fl"><label>Area</label><input id="c-a"/></div></div>
-  <div class="fl"><label>Entry Date</label><input id="c-dt" type="date"/></div>
-  <div class="fl"><label>Notes</label><textarea id="c-nt"></textarea></div>
-  <div class="ma"><button class="btn" id="m-cli-x">Cancel</button><button class="btn btn-g" id="m-cli-ok">Save</button></div></div></div>
-
-
-<!-- BALANCE SHEET -->
-
-</div>
-
