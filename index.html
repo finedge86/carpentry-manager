@@ -431,8 +431,21 @@ tr:hover td{background:var(--bg3)}
 <div class="g3" id="bs-summary" style="margin-bottom:1.4rem"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem"><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:600;font-size:14px;color:var(--green)">📦 Assets</div><button class="btn btn-g btn-sm" id="btn-aasset">+ Add asset</button></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Fixed Assets</div><div class="card" style="padding:0;overflow:hidden;margin-bottom:12px"><table class="tbl"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-fixed-tb"></tbody></table></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Current Assets</div><div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-current-tb"></tbody></table></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:600;font-size:14px;color:var(--red)">💳 Liabilities</div><button class="btn btn-sm" style="border-color:var(--red);color:var(--red)" id="btn-aliab">+ Add liability</button></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Long-term Liabilities</div><div class="card" style="padding:0;overflow:hidden;margin-bottom:12px"><table class="tbl"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-longterm-tb"></tbody></table></div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Short-term Liabilities</div><div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id="bs-shortterm-tb"></tbody></table></div></div></div>
 <div id="bs-equity" style="margin-bottom:1.4rem"></div>
+<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.4rem" id="bs-equity-detail">
+  <div class="st" style="margin-top:0;margin-bottom:12px">👤 Owner's Equity <span style="font-size:11px;color:var(--text2);font-weight:400">(Required for XBRL)</span></div>
+  <div class="fr">
+    <div class="fl"><label>Opening Capital (KWD)</label><input id="eq-capital" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner's investment in business</div></div>
+    <div class="fl"><label>Drawings / Withdrawals (KWD)</label><input id="eq-drawings" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Owner cash taken out</div></div>
+  </div>
+  <div class="fr">
+    <div class="fl"><label>Prior Year Retained Earnings (KWD)</label><input id="eq-retained" type="number" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">Profit brought forward from last year</div></div>
+    <div class="fl"><label>Prior Year Revenue (KWD)</label><input id="eq-prior-rev" type="number" min="0" step=".001" placeholder="0.000"/><div style="font-size:11px;color:var(--text2);margin-top:3px">For IFRS comparative period</div></div>
+  </div>
+  <button class="btn btn-g" style="margin-top:8px" onclick="saveEquityInfo()">💾 Save Equity Info</button>
+  <div id="bs-equity-summary" style="margin-top:12px"></div>
 </div>
-<div class="mb" id="m-asset"><div class="md"><div class="mt" id="m-asset-tit">Add Asset</div><div class="fl"><label>Item name *</label><input id="ast-n"/></div><div class="fr"><div class="fl"><label>Category</label><select id="ast-cat"><option value="fixed">Fixed Asset</option><option value="current">Current Asset</option></select></div><div class="fl"><label>Value (KWD) *</label><input id="ast-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date</label><input id="ast-dt" type="date"/></div><div class="fl"><label>Depreciation/yr</label><input id="ast-dep" type="number" min="0" step=".001" placeholder="0"/></div></div><div class="fl"><label>Notes</label><textarea id="ast-nt"></textarea></div><div class="ma"><button class="btn" id="m-asset-x">Cancel</button><button class="btn btn-g" id="m-asset-ok">Save</button></div></div></div>
+</div>
+<div class="mb" id="m-asset"><div class="md"><div class="mt" id="m-asset-tit">Add Asset</div><div class="fl"><label>Item name *</label><input id="ast-n"/></div><div class="fr"><div class="fl"><label>Category</label><select id="ast-cat"><option value="fixed">Fixed Asset</option><option value="current">Current Asset</option></select></div><div class="fl"><label>Value (KWD) *</label><input id="ast-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date</label><input id="ast-dt" type="date"/></div><div class="fl"><label>Depreciation/yr (KWD)</label><input id="ast-dep" type="number" min="0" step=".001" placeholder="auto-calc"/></div><div class="fl"><label>Useful life (yrs)</label><input id="ast-life" type="number" min="1" max="50" placeholder="5" onchange="var v=parseFloat(document.getElementById('ast-v').value)||0;var l=parseFloat(this.value)||5;document.getElementById('ast-dep').value=(v/l).toFixed(3);"/></div></div><div class="fl"><label>Notes</label><textarea id="ast-nt"></textarea></div><div class="ma"><button class="btn" id="m-asset-x">Cancel</button><button class="btn btn-g" id="m-asset-ok">Save</button></div></div></div>
 <div class="mb" id="m-liab"><div class="md"><div class="mt" id="m-liab-tit">Add Liability</div><div class="fl"><label>Item name *</label><input id="liab-n"/></div><div class="fr"><div class="fl"><label>Type</label><select id="liab-cat"><option value="longterm">Long-term</option><option value="shortterm">Short-term</option></select></div><div class="fl"><label>Amount (KWD) *</label><input id="liab-v" type="number" min="0" step=".001"/></div></div><div class="fr"><div class="fl"><label>Date added</label><input id="liab-dt" type="date"/></div><div class="fl"><label>Due date</label><input id="liab-due" type="date"/></div></div><div class="fl"><label>Notes</label><textarea id="liab-nt"></textarea></div><div class="ma"><button class="btn" id="m-liab-x">Cancel</button><button class="btn btn-g" id="m-liab-ok">Save</button></div></div></div>
 <!-- MODALS -->
 <div class="mb" id="m-cash"><div class="md">
@@ -441,6 +454,7 @@ tr:hover td{background:var(--bg3)}
   <div class="fl"><label>Description *</label><input id="ca-d"/></div>
   <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="ca-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="ca-dt" type="date"/></div></div>
   <div class="fr"><div class="fl"><label>Category</label><select id="ca-c"></select></div><div class="fl"><label>Reference</label><input id="ca-r"/></div></div>
+  <div class="fl"><label>Cash Flow Type <span style="font-size:10px;color:var(--text2)">(IAS 7 — for XBRL)</span></label><select id="ca-flow"><option value="operating">Operating — day-to-day business</option><option value="investing">Investing — buy/sell assets</option><option value="financing">Financing — loans, owner capital</option></select></div>
   <div class="fl" id="ca-proj-row" style="display:none"><label>Link to project (creates paid invoice)</label><select id="ca-proj"><option value="">— none —</option></select></div>
   <div class="fl"><label>Notes</label><textarea id="ca-n"></textarea></div>
   <div class="ma"><button class="btn" id="m-cash-x">Cancel</button><button class="btn btn-g" id="m-cash-ok">Save</button></div>
@@ -495,6 +509,7 @@ tr:hover td{background:var(--bg3)}
 <div class="mb" id="m-exp"><div class="md">
   <div class="mt" id="mextit">Add expense</div>
   <div class="fl"><label>Description *</label><input id="e-d"/></div>
+  <div class="fl"><label>Supplier / Vendor</label><input id="e-sup" placeholder="e.g. Al-Mulla Hardware (optional)"/></div>
   <div class="fr"><div class="fl"><label>Amount (KWD) *</label><input id="e-a" type="number" min="0" step=".001"/></div><div class="fl"><label>Date</label><input id="e-dt" type="date"/></div></div>
   <div class="fr"><div class="fl"><label>Category</label><select id="e-c"><option>Materials</option><option>Tools</option><option>Labor</option><option>Transport</option><option>Utilities</option><option>Other</option></select></div><div class="fl"><label>Project</label><select id="e-pr"></select></div></div>
   <div class="ma"><button class="btn" id="m-exp-x">Cancel</button><button class="btn btn-g" id="m-exp-ok">Save</button></div>
@@ -564,7 +579,7 @@ document.getElementById('ctib').addEventListener('click',()=>setCT('in'));
 document.getElementById('ctob').addEventListener('click',()=>setCT('out'));
 document.getElementById('btn-cin').addEventListener('click',()=>{eId.cash=null;['ca-d','ca-a','ca-r','ca-n'].forEach(id=>document.getElementById(id).value='');document.getElementById('ca-dt').value=T;setCT('in');om('cash')});
 document.getElementById('btn-cout').addEventListener('click',()=>{eId.cash=null;['ca-d','ca-a','ca-r','ca-n'].forEach(id=>document.getElementById(id).value='');document.getElementById('ca-dt').value=T;setCT('out');om('cash')});
-document.getElementById('m-cash-ok').addEventListener('click',()=>{const amt=parseFloat(document.getElementById('ca-a').value)||0;const desc=document.getElementById('ca-d').value.trim();if(!amt||!desc)return;const obj={type:cashType,desc,amount:amt,date:document.getElementById('ca-dt').value,cat:document.getElementById('ca-c').value,ref:document.getElementById('ca-r').value,notes:document.getElementById('ca-n').value};if(eId.cash)Object.assign(DB.cashTransactions.find(x=>x.id===eId.cash),obj);else{DB.cashTransactions.push({id:uid(),...obj});if(cashType==='in'){const _pid=document.getElementById('ca-proj')?.value;if(_pid){const _proj=DB.projects.find(p=>p.id===_pid);DB.invoices.push({id:uid(),clientId:_proj?.clientId||'',projectId:_pid,amount:amt,date:obj.date,status:'Paid',notes:'💵 Cash payment — '+desc});}}}save();cm('cash');rCash();if(typeof rInv==='function')rInv();rDash()});
+document.getElementById('m-cash-ok').addEventListener('click',()=>{const amt=parseFloat(document.getElementById('ca-a').value)||0;const desc=document.getElementById('ca-d').value.trim();if(!amt||!desc)return;const obj={type:cashType,desc,amount:amt,date:document.getElementById('ca-dt').value,cat:document.getElementById('ca-c').value,ref:document.getElementById('ca-r').value,flowType:(document.getElementById('ca-flow')?.value||'operating'),notes:document.getElementById('ca-n').value};if(eId.cash)Object.assign(DB.cashTransactions.find(x=>x.id===eId.cash),obj);else{DB.cashTransactions.push({id:uid(),...obj});if(cashType==='in'){const _pid=document.getElementById('ca-proj')?.value;if(_pid){const _proj=DB.projects.find(p=>p.id===_pid);DB.invoices.push({id:uid(),clientId:_proj?.clientId||'',projectId:_pid,amount:amt,date:obj.date,status:'Paid',notes:'💵 Cash payment — '+desc});}}}save();cm('cash');rCash();if(typeof rInv==='function')rInv();rDash()});
 window.editCash=id=>{eId.cash=id;const t=DB.cashTransactions.find(x=>x.id===id);setCT(t.type);document.getElementById('ca-d').value=t.desc;document.getElementById('ca-a').value=t.amount;document.getElementById('ca-dt').value=t.date||'';document.getElementById('ca-c').value=t.cat||'Other';document.getElementById('ca-r').value=t.ref||'';document.getElementById('ca-n').value=t.notes||'';om('cash')};
 function rCash(){const{i,o,b}=cashBal();const cbal=document.getElementById('cbal');cbal.textContent=kwd(b);cbal.style.color=b>=0?'#fff':'#fca5a5';document.getElementById('csub').textContent=DB.cashTransactions.length+' transactions';document.getElementById('ctin').textContent=kwd(i);document.getElementById('ctout').textContent=kwd(o);const mi=DB.cashTransactions.filter(t=>t.type==='in'&&(t.date||'').startsWith(TM)).reduce((s,t)=>s+t.amount,0);const mo2=DB.cashTransactions.filter(t=>t.type==='out'&&(t.date||'').startsWith(TM)).reduce((s,t)=>s+t.amount,0);const mn=mi-mo2;document.getElementById('cmn').textContent=kwd(mn);document.getElementById('cmn').className='mv '+(mn>=0?'vg':'vr');document.getElementById('cml2').textContent=fm(TM);rCashTbl()}
 function rCashTbl(){const tb=document.getElementById('ctb');let tx=[...DB.cashTransactions].sort((a,b)=>(b.date||'').localeCompare(a.date||''));if(cashFil==='in')tx=tx.filter(t=>t.type==='in');if(cashFil==='out')tx=tx.filter(t=>t.type==='out');if(!tx.length){tb.innerHTML='<tr><td colspan="7"><div class="es">No cash transactions yet.</div></td></tr>';return}tb.innerHTML=tx.map(t=>`<tr><td><strong>${t.desc}</strong>${t.notes?'<br><small style="color:var(--text3)">'+t.notes+'</small>':''}</td><td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${CC[t.cat]||'#888'};margin-right:4px"></span>${t.cat}</td><td><span class="bge b${t.type==='in'?'in':'out'}">${t.type==='in'?'▲ In':'▼ Out'}</span></td><td style="font-weight:500;color:${t.type==='in'?'var(--green)':'var(--red)'}">${t.type==='in'?'+':'−'} ${kwd(t.amount)}</td><td>${fd(t.date)}</td><td style="color:var(--text2);font-size:11px">${t.ref||'—'}</td><td><div class="ra"><button class="btn-e" onclick="editCash('${t.id}')">Edit</button><button class="btn-d btn-sm" onclick="delCash('${t.id}')">Del</button></div></td></tr>`).join('')}
@@ -602,8 +617,8 @@ window.editInv=id=>{eId.inv=id;const r=DB.invoices.find(x=>x.id===id);document.g
 window.tPaid=id=>{const inv=DB.invoices.find(i=>i.id===id);if(inv){inv.status=inv.status==='Paid'?'Pending':'Paid';save();rInv();rDash()}};
 // EXPENSE
 document.getElementById('btn-aex').addEventListener('click',()=>{eId.exp=null;document.getElementById('mextit').textContent='Add expense';document.getElementById('e-pr').innerHTML='<option value="">— none —</option>'+DB.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');['e-d','e-a'].forEach(id=>document.getElementById(id).value='');document.getElementById('e-dt').value=T;document.getElementById('e-c').value='Materials';om('exp')});
-document.getElementById('m-exp-ok').addEventListener('click',()=>{const amt=parseFloat(document.getElementById('e-a').value)||0;const desc=document.getElementById('e-d').value.trim();if(!amt||!desc)return;const obj={desc,amount:amt,date:document.getElementById('e-dt').value,cat:document.getElementById('e-c').value,projectId:document.getElementById('e-pr').value};if(eId.exp)Object.assign(DB.expenses.find(x=>x.id===eId.exp),obj);else DB.expenses.push({id:uid(),...obj});save();cm('exp');rExp();rDash()});
-window.editExp=id=>{eId.exp=id;const r=DB.expenses.find(x=>x.id===id);document.getElementById('mextit').textContent='Edit expense';document.getElementById('e-pr').innerHTML='<option value="">— none —</option>'+DB.projects.map(p=>`<option value="${p.id}"${p.id===r.projectId?' selected':''}>${p.name}</option>`).join('');document.getElementById('e-d').value=r.desc;document.getElementById('e-a').value=r.amount;document.getElementById('e-dt').value=r.date||'';document.getElementById('e-c').value=r.cat;document.getElementById('e-pr').value=r.projectId||'';om('exp')};
+document.getElementById('m-exp-ok').addEventListener('click',()=>{const amt=parseFloat(document.getElementById('e-a').value)||0;const desc=document.getElementById('e-d').value.trim();if(!amt||!desc)return;const obj={desc,amount:amt,date:document.getElementById('e-dt').value,cat:document.getElementById('e-c').value,projectId:document.getElementById('e-pr').value,supplier:(document.getElementById('e-sup')?.value||'').trim()};if(eId.exp)Object.assign(DB.expenses.find(x=>x.id===eId.exp),obj);else DB.expenses.push({id:uid(),...obj});save();cm('exp');rExp();rDash()});
+window.editExp=id=>{eId.exp=id;const r=DB.expenses.find(x=>x.id===id);document.getElementById('mextit').textContent='Edit expense';document.getElementById('e-pr').innerHTML='<option value="">— none —</option>'+DB.projects.map(p=>`<option value="${p.id}"${p.id===r.projectId?' selected':''}>${p.name}</option>`).join('');document.getElementById('e-d').value=r.desc;if(document.getElementById('e-sup'))document.getElementById('e-sup').value=r.supplier||'';document.getElementById('e-a').value=r.amount;document.getElementById('e-dt').value=r.date||'';document.getElementById('e-c').value=r.cat;document.getElementById('e-pr').value=r.projectId||'';om('exp')};
 // CLIENT
 document.getElementById('btn-ac').addEventListener('click',()=>{eId.cli=null;document.getElementById('mclitit').textContent='Add client';['c-n','c-p','c-a','c-nt'].forEach(id=>document.getElementById(id).value='');document.getElementById('c-dt').value=T;om('cli')});
 document.getElementById('m-cli-ok').addEventListener('click',()=>{const name=document.getElementById('c-n').value.trim();if(!name)return;const obj={name,phone:document.getElementById('c-p').value,area:document.getElementById('c-a').value,entryDate:document.getElementById('c-dt').value||T,notes:document.getElementById('c-nt').value};if(eId.cli)Object.assign(DB.clients.find(x=>x.id===eId.cli),obj);else DB.clients.push({id:uid(),...obj});save();cm('cli');rCli()});
@@ -1116,6 +1131,218 @@ ${(DB.liabilities||[]).filter(l=>l.cat==='shortterm').length>0 ? '  <ifrs-sme:Cu
   a.download = (nameEn.replace(/\s+/g,'_'))+'_XBRL_'+fyEnd+'.xml';
   a.click();
   alert('XBRL XML downloaded! \n\nNext steps:\n1. Review the XML file\n2. Have your auditor verify the values\n3. Upload to Kuwait Business Center (Qayd platform)\n\nFiling is optional in 2026, mandatory from Jan 2027.');
+};
+
+// ─── OWNER EQUITY INFO ───────────────────────────────────────────────────
+window.saveEquityInfo = function(){
+  DB.equityInfo = {
+    capital: parseFloat(document.getElementById('eq-capital')?.value)||0,
+    drawings: parseFloat(document.getElementById('eq-drawings')?.value)||0,
+    retained: parseFloat(document.getElementById('eq-retained')?.value)||0,
+    priorRevenue: parseFloat(document.getElementById('eq-prior-rev')?.value)||0
+  };
+  save();
+  renderEquitySummary();
+  alert('Equity info saved ✅');
+};
+
+window.renderEquitySummary = function(){
+  const ei = DB.equityInfo||{};
+  const pl = calcPL();
+  const capital = ei.capital||0;
+  const drawings = ei.drawings||0;
+  const retained = ei.retained||0;
+  const currentProfit = pl.netProfit;
+  const totalEquity = capital + retained + currentProfit - drawings;
+  const el = document.getElementById('bs-equity-summary');
+  if(!el) return;
+  const kf = v => '<span style="font-weight:600;color:'+(v>=0?'var(--green)':'var(--red)')+'">KWD '+v.toFixed(3)+'</span>';
+  el.innerHTML = '<div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:13px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +'<div>Opening Capital: '+kf(capital)+'</div>'
+    +'<div>Drawings: <span style="color:var(--red)">− KWD '+drawings.toFixed(3)+'</span></div>'
+    +'<div>Prior Retained Earnings: '+kf(retained)+'</div>'
+    +'<div>Current Net Profit: '+kf(currentProfit)+'</div>'
+    +'</div>'
+    +'<div style="border-top:2px solid var(--border2);margin-top:8px;padding-top:8px;font-size:14px;font-weight:600">Total Equity: '+kf(totalEquity)+'</div>'
+    +'</div>';
+};
+
+// ─── CASH FLOW STATEMENT CALC ────────────────────────────────────────────
+window.calcCashFlow = function(){
+  const txs = DB.cashTransactions||[];
+  const operating = txs.filter(t=>!t.flowType||t.flowType==='operating');
+  const investing = txs.filter(t=>t.flowType==='investing');
+  const financing = txs.filter(t=>t.flowType==='financing');
+  const sum = arr => arr.reduce((s,t)=>s+(t.type==='in'?t.amount:-t.amount),0);
+  return {
+    operatingNet: sum(operating),
+    investingNet: sum(investing),
+    financingNet: sum(financing),
+    netChange: sum(txs),
+    operating, investing, financing
+  };
+};
+
+// ─── UPDATE rBalSheet TO INCLUDE EQUITY DETAIL ────────────────────────────
+const _origRBS = window.rBalSheet;
+window.rBalSheet = function(){
+  if(_origRBS) _origRBS();
+  // Load equity fields
+  const ei = DB.equityInfo||{};
+  const setVal = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+  setVal('eq-capital', ei.capital||'');
+  setVal('eq-drawings', ei.drawings||'');
+  setVal('eq-retained', ei.retained||'');
+  setVal('eq-prior-rev', ei.priorRevenue||'');
+  renderEquitySummary();
+};
+
+// ─── UPDATE exportXBRL TO INCLUDE CASH FLOW + EQUITY ─────────────────────
+const _origXBRL = window.exportXBRL;
+window.exportXBRL = function(){
+  const pl = calcPL();
+  const cf = calcCashFlow();
+  const ei = DB.entityInfo||{};
+  const eq = DB.equityInfo||{};
+  const nameEn = ei.nameEn||'Fine Edge Carpentry';
+  const civilId = ei.civilId||'ENTER-CIVIL-ID';
+  const fyStart = ei.fyStart||new Date().getFullYear()+'-01-01';
+  const fyEnd = ei.fyEnd||new Date().getFullYear()+'-12-31';
+  const today = new Date().toISOString().split('T')[0];
+  const capital = eq.capital||0;
+  const drawings = eq.drawings||0;
+  const retained = eq.retained||0;
+  const totalEquity = capital + retained + pl.netProfit - drawings;
+  const totalAssets = pl.cash + pl.receivables + (DB.assets||[]).reduce((s,a)=>s+a.value,0);
+  const totalLiab = (DB.liabilities||[]).reduce((s,l)=>s+l.value,0);
+  const fixedAssets = (DB.assets||[]).filter(a=>a.cat==='fixed');
+  const ppeCost = fixedAssets.reduce((s,a)=>s+a.value,0);
+  const ppeDepreciation = fixedAssets.reduce((s,a)=>s+(a.depreciation||0),0);
+  const ppeNet = ppeCost - ppeDepreciation;
+
+  const xbrl = '<?xml version="1.0" encoding="UTF-8"?>
+'
+  +'<!--
+  XBRL Instance Document — IFRS for SMEs
+'
+  +'  Entity: '+nameEn+'
+  Civil ID: '+civilId+'
+  Period: '+fyStart+' to '+fyEnd+'
+'
+  +'  Generated: '+today+'
+  For upload to: Kuwait Business Center — Qayd System
+'
+  +'  NOTE: Have a certified auditor review before submission.
+-->
+'
+  +'<xbrl
+  xmlns="http://www.xbrl.org/2003/instance"
+  xmlns:xbrli="http://www.xbrl.org/2003/instance"
+'
+  +'  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+'
+  +'  xmlns:ifrs-sme="http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme"
+'
+  +'  xmlns:dei="http://xbrl.sec.gov/dei/2021">
+
+'
+  +'  <!-- CONTEXTS -->
+'
+  +'  <xbrli:context id="CurrentPeriod"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+civilId+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>'+fyStart+'</xbrli:startDate><xbrli:endDate>'+fyEnd+'</xbrli:endDate></xbrli:period></xbrli:context>
+'
+  +'  <xbrli:context id="PeriodEnd"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+civilId+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>'+fyEnd+'</xbrli:instant></xbrli:period></xbrli:context>
+
+'
+  +'  <!-- UNIT -->
+'
+  +'  <xbrli:unit id="KWD"><xbrli:measure>iso4217:KWD</xbrli:measure></xbrli:unit>
+
+'
+  +'  <!-- ENTITY -->
+'
+  +'  <dei:EntityRegistrantName contextRef="CurrentPeriod">'+nameEn+'</dei:EntityRegistrantName>
+'
+  +'  <dei:EntityCentralIndexKey contextRef="CurrentPeriod">'+civilId+'</dei:EntityCentralIndexKey>
+'
+  +'  <dei:DocumentPeriodEndDate contextRef="CurrentPeriod">'+fyEnd+'</dei:DocumentPeriodEndDate>
+'
+  +'  <dei:DocumentType contextRef="CurrentPeriod">Annual</dei:DocumentType>
+
+'
+  +'  <!-- INCOME STATEMENT (IFRS SME Section 5) -->
+'
+  +'  <ifrs-sme:Revenue contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.revenue.toFixed(3)+'</ifrs-sme:Revenue>
+'
+  +'  <ifrs-sme:OtherIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.cashRevenue.toFixed(3)+'</ifrs-sme:OtherIncome>
+'
+  +'  <ifrs-sme:CostOfSales contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.costOfSales.toFixed(3)+'</ifrs-sme:CostOfSales>
+'
+  +'  <ifrs-sme:RawMaterialsAndConsumablesUsed contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.materials.toFixed(3)+'</ifrs-sme:RawMaterialsAndConsumablesUsed>
+'
+  +'  <ifrs-sme:GrossProfit contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.grossProfit.toFixed(3)+'</ifrs-sme:GrossProfit>
+'
+  +'  <ifrs-sme:EmployeeBenefitsExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.salaries.toFixed(3)+'</ifrs-sme:EmployeeBenefitsExpense>
+'
+  +'  <ifrs-sme:RentalExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.rent.toFixed(3)+'</ifrs-sme:RentalExpense>
+'
+  +'  <ifrs-sme:DepreciationAndAmortisation contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+ppeDepreciation.toFixed(3)+'</ifrs-sme:DepreciationAndAmortisation>
+'
+  +'  <ifrs-sme:OtherExpenses contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+(pl.shared+pl.otherExp).toFixed(3)+'</ifrs-sme:OtherExpenses>
+'
+  +'  <ifrs-sme:ProfitLoss contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+pl.netProfit.toFixed(3)+'</ifrs-sme:ProfitLoss>
+'
+  +'  <ifrs-sme:NumberOfEmployees contextRef="CurrentPeriod" decimals="0">'+(DB.employees||[]).length+'</ifrs-sme:NumberOfEmployees>
+
+'
+  +'  <!-- BALANCE SHEET (IFRS SME Section 4) -->
+'
+  +'  <ifrs-sme:PropertyPlantAndEquipmentNet contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+ppeNet.toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipmentNet>
+'
+  +'  <ifrs-sme:PropertyPlantAndEquipmentGross contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+ppeCost.toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipmentGross>
+'
+  +'  <ifrs-sme:AccumulatedDepreciationAndAmortisation contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+ppeDepreciation.toFixed(3)+'</ifrs-sme:AccumulatedDepreciationAndAmortisation>
+'
+  +'  <ifrs-sme:CashAndCashEquivalents contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+pl.cash.toFixed(3)+'</ifrs-sme:CashAndCashEquivalents>
+'
+  +'  <ifrs-sme:TradeAndOtherReceivables contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+pl.receivables.toFixed(3)+'</ifrs-sme:TradeAndOtherReceivables>
+'
+  +'  <ifrs-sme:Assets contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+totalAssets.toFixed(3)+'</ifrs-sme:Assets>
+'
+  +'  <ifrs-sme:Liabilities contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+totalLiab.toFixed(3)+'</ifrs-sme:Liabilities>
+
+'
+  +'  <!-- EQUITY (IFRS SME Section 22) -->
+'
+  +'  <ifrs-sme:IssuedCapital contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+capital.toFixed(3)+'</ifrs-sme:IssuedCapital>
+'
+  +'  <ifrs-sme:RetainedEarnings contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+(retained+pl.netProfit).toFixed(3)+'</ifrs-sme:RetainedEarnings>
+'
+  +'  <ifrs-sme:DividendsRecognisedAsDistributions contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+drawings.toFixed(3)+'</ifrs-sme:DividendsRecognisedAsDistributions>
+'
+  +'  <ifrs-sme:Equity contextRef="PeriodEnd" unitRef="KWD" decimals="3">'+totalEquity.toFixed(3)+'</ifrs-sme:Equity>
+
+'
+  +'  <!-- CASH FLOW STATEMENT (IFRS SME Section 7 / IAS 7) -->
+'
+  +'  <ifrs-sme:CashFlowsFromUsedInOperatingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+cf.operatingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInOperatingActivities>
+'
+  +'  <ifrs-sme:CashFlowsFromUsedInInvestingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+cf.investingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInInvestingActivities>
+'
+  +'  <ifrs-sme:CashFlowsFromUsedInFinancingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+cf.financingNet.toFixed(3)+'</ifrs-sme:CashFlowsFromUsedInFinancingActivities>
+'
+  +'  <ifrs-sme:IncreaseDecreaseInCashAndCashEquivalents contextRef="CurrentPeriod" unitRef="KWD" decimals="3">'+cf.netChange.toFixed(3)+'</ifrs-sme:IncreaseDecreaseInCashAndCashEquivalents>
+
+'
+  +'</xbrl>';
+
+  const blob = new Blob([xbrl],{type:'application/xml;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (nameEn.replace(/s+/g,'_'))+'_XBRL_IFRS_'+fyEnd+'.xml';
+  a.click();
+  alert('XBRL XML downloaded!\n\nIncludes:\n✅ Income Statement\n✅ Balance Sheet (with PPE & depreciation)\n✅ Cash Flow Statement (IAS 7)\n✅ Owner Equity\n\nUpload to: Kuwait Business Center → Qayd System');
 };
 </script>
 </body>
