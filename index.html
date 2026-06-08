@@ -225,6 +225,7 @@ tr:hover td{background:var(--bg3)}
   <div class="ni" data-p="clients">👤 Clients</div>
   <div class="nsec" style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:14px 16px 4px">FINANCIAL</div>
   <div class="ni" data-p="balsheet">⚖️ Balance Sheet</div>
+<div class="ni" data-p="reports">📊 Reports &amp; Export</div>
 </div>
 
 <div class="main">
@@ -369,6 +370,61 @@ tr:hover td{background:var(--bg3)}
 
 </div></div>
 
+<!-- REPORTS PAGE -->
+<div id="pg-reports" class="pg">
+<div class="ph"><div><div class="pt">Reports &amp; Export</div><div class="ps">P&amp;L · XBRL · Excel</div></div></div>
+
+<div class="g3" style="margin-bottom:1.2rem">
+  <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--green);cursor:pointer" id="btn-export-pdf" onclick="exportPL('pdf')">
+    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📄 P&amp;L Report</div>
+    <div style="font-size:16px;font-weight:600;color:var(--green)">Export PDF</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">Formatted Income Statement for Kuwait MoCI</div>
+  </div>
+  <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--blue);cursor:pointer" id="btn-export-xl" onclick="exportPL('excel')">
+    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📊 Excel Report</div>
+    <div style="font-size:16px;font-weight:600;color:var(--blue)">Export Excel</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">P&amp;L + Balance Sheet in .xlsx format</div>
+  </div>
+  <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--amber);cursor:pointer" id="btn-export-xbrl" onclick="exportXBRL()">
+    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🏛️ XBRL XML</div>
+    <div style="font-size:16px;font-weight:600;color:var(--amber-text)">Export XBRL</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">IFRS-tagged XML for Qayd platform (Kuwait)</div>
+  </div>
+</div>
+
+<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.2rem">
+  <div class="st" style="margin-top:0;margin-bottom:12px">⚙️ Entity Information <span style="font-size:11px;color:var(--text2);font-weight:400">(Required for XBRL filing)</span></div>
+  <div class="fr">
+    <div class="fl"><label>Company Name (English)</label><input id="rpt-name-en" placeholder="Fine Edge Carpentry"/></div>
+    <div class="fl"><label>Company Name (Arabic)</label><input id="rpt-name-ar" placeholder="فاين إيدج للنجارة" dir="rtl"/></div>
+  </div>
+  <div class="fr">
+    <div class="fl"><label>Civil ID / Commercial Reg. No.</label><input id="rpt-civilid" placeholder="e.g. 123456789"/></div>
+    <div class="fl"><label>Entity Type</label>
+      <select id="rpt-entity-type">
+        <option value="sole">Sole Proprietorship — مؤسسة فردية</option>
+        <option value="wll">WLL — ذ.م.م</option>
+        <option value="ksc">KSC Closed — مساهمة مقفلة</option>
+        <option value="partnership">Partnership — شراكة</option>
+      </select>
+    </div>
+  </div>
+  <div class="fr">
+    <div class="fl"><label>Fiscal Year Start</label><input id="rpt-fy-start" type="date"/></div>
+    <div class="fl"><label>Fiscal Year End</label><input id="rpt-fy-end" type="date"/></div>
+  </div>
+  <div class="fr">
+    <div class="fl"><label>Industry / Activity</label><input id="rpt-activity" placeholder="Carpentry &amp; Furniture Manufacturing"/></div>
+    <div class="fl"><label>Auditor Name (optional)</label><input id="rpt-auditor" placeholder="Auditor firm name"/></div>
+  </div>
+  <button class="btn btn-g" style="margin-top:8px" onclick="saveEntityInfo()">💾 Save Entity Info</button>
+</div>
+
+<div class="card" style="padding:1.2rem 1.4rem;margin-bottom:1.2rem" id="rpt-pl-preview">
+  <div class="st" style="margin-top:0;margin-bottom:12px">📋 P&amp;L Preview <span style="font-size:11px;color:var(--text2);font-weight:400" id="rpt-period-label"></span></div>
+  <div id="rpt-pl-table"></div>
+</div>
+</div>
 <!-- BALANCE SHEET -->
 <div id="pg-balsheet" class="pg">
 <div class="ph"><div><div class="pt">Balance Sheet</div><div class="ps" id="bs-date"></div></div></div>
@@ -492,7 +548,7 @@ const ppct=p=>{const v=p.value||0;if(!v)return 0;return Math.min(100,Math.round(
 const pbdg=p=>{const pd=ppaid(p.id),v=p.value||0;if(!v)return bg('No value');if(pd>=v)return'<span class="bge bfp">Fully paid</span>';if(pd>0)return'<span class="bge bpt">Partial</span>';return'<span class="bge bup">Unpaid</span>'};
 const totPend=()=>DB.projects.filter(p=>p.status!=='Cancelled').reduce((s,p)=>s+prem(p),0);
 // NAV
-document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));el.classList.add('active');const p=el.dataset.p;document.querySelectorAll('.pg').forEach(pg=>pg.classList.remove('on'));document.getElementById('pg-'+p).classList.add('on');document.querySelector('.main').scrollTop=0;({dash:rDash,scanner:()=>{rScanHist();rChips()},cash:rCash,monthly:rMonthly,overhead:rOverhead,shared:rShared,expenses:rExp,crpt:rCRpt,projects:rProj,invoices:rInv,clients:rCli,balsheet:rBalSheet})[p]?.()}));
+document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));el.classList.add('active');const p=el.dataset.p;document.querySelectorAll('.pg').forEach(pg=>pg.classList.remove('on'));document.getElementById('pg-'+p).classList.add('on');document.querySelector('.main').scrollTop=0;({dash:rDash,scanner:()=>{rScanHist();rChips()},cash:rCash,monthly:rMonthly,overhead:rOverhead,shared:rShared,expenses:rExp,crpt:rCRpt,projects:rProj,invoices:rInv,clients:rCli,balsheet:rBalSheet,reports:rReports})[p]?.()}));
 document.querySelectorAll('.ohtb').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.ohtb').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.ohs').forEach(s=>s.classList.remove('active'));document.getElementById('oh-'+b.dataset.ot).classList.add('active')}));
 document.getElementById('btnpm').addEventListener('click',()=>{const[y,m]=curMo.split('-').map(Number);const d=new Date(y,m-2,1);curMo=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');rMonthly()});
 document.getElementById('btnnm').addEventListener('click',()=>{const[y,m]=curMo.split('-').map(Number);const d=new Date(y,m,1);curMo=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');rMonthly()});
@@ -696,6 +752,371 @@ document.getElementById('ibtn').addEventListener('click',()=>{const inp=document
 // INIT
 rDash();(function fixBsLayout(){var M=document.querySelector(".main");var _pg=document.getElementById("pg-balsheet");if(_pg&&!M.contains(_pg))M.appendChild(_pg);if(!document.getElementById("pg-balsheet")){var pg=document.createElement("div");pg.id="pg-balsheet";pg.className="pg";pg.innerHTML="<div class=\"ph\"><div><div class=\"pt\">Balance Sheet</div><div class=\"ps\" id=\"bs-date\"></div></div></div><div class=\"g3\" id=\"bs-summary\" style=\"margin-bottom:1.4rem\"></div><div style=\"display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem\"><div><div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:10px\"><div style=\"font-weight:600;font-size:14px;color:var(--green)\">📦 Assets</div><button class=\"btn btn-g btn-sm\" id=\"btn-aasset\">+ Add asset</button></div><div style=\"font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px\">Fixed Assets</div><div class=\"card\" style=\"padding:0;overflow:hidden;margin-bottom:12px\"><table class=\"tbl\"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id=\"bs-fixed-tb\"></tbody></table></div><div style=\"font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px\">Current Assets</div><div class=\"card\" style=\"padding:0;overflow:hidden\"><table class=\"tbl\"><thead><tr><th>Item</th><th>Value (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id=\"bs-current-tb\"></tbody></table></div></div><div><div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:10px\"><div style=\"font-weight:600;font-size:14px;color:var(--red)\">💳 Liabilities</div><button class=\"btn btn-sm\" style=\"border-color:var(--red);color:var(--red)\" id=\"btn-aliab\">+ Add liability</button></div><div style=\"font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px\">Long-term Liabilities</div><div class=\"card\" style=\"padding:0;overflow:hidden;margin-bottom:12px\"><table class=\"tbl\"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id=\"bs-longterm-tb\"></tbody></table></div><div style=\"font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px\">Short-term Liabilities</div><div class=\"card\" style=\"padding:0;overflow:hidden\"><table class=\"tbl\"><thead><tr><th>Item</th><th>Amount (KWD)</th><th>Notes</th><th></th></tr></thead><tbody id=\"bs-shortterm-tb\"></tbody></table></div></div></div><div id=\"bs-equity\" style=\"margin-bottom:1.4rem\"></div>";M.appendChild(pg);}if(!document.getElementById("m-asset")){var a=document.createElement("div");a.className="mb";a.id="m-asset";a.innerHTML="<div class=\"md\"><div class=\"mt\" id=\"m-asset-tit\">Add Asset</div><div class=\"fl\"><label>Item name *</label><input id=\"ast-n\"/></div><div class=\"fr\"><div class=\"fl\"><label>Category</label><select id=\"ast-cat\"><option value=\"fixed\">Fixed Asset</option><option value=\"current\">Current Asset</option></select></div><div class=\"fl\"><label>Value (KWD) *</label><input id=\"ast-v\" type=\"number\" min=\"0\" step=\".001\"/></div></div><div class=\"fr\"><div class=\"fl\"><label>Date</label><input id=\"ast-dt\" type=\"date\"/></div><div class=\"fl\"><label>Depreciation/yr</label><input id=\"ast-dep\" type=\"number\" min=\"0\" step=\".001\" placeholder=\"0\"/></div></div><div class=\"fl\"><label>Notes</label><textarea id=\"ast-nt\"></textarea></div><div class=\"ma\"><button class=\"btn\" id=\"m-asset-x\">Cancel</button><button class=\"btn btn-g\" id=\"m-asset-ok\">Save</button></div></div>";document.body.appendChild(a);}if(!document.getElementById("m-liab")){var b=document.createElement("div");b.className="mb";b.id="m-liab";b.innerHTML="<div class=\"md\"><div class=\"mt\" id=\"m-liab-tit\">Add Liability</div><div class=\"fl\"><label>Item name *</label><input id=\"liab-n\"/></div><div class=\"fr\"><div class=\"fl\"><label>Type</label><select id=\"liab-cat\"><option value=\"longterm\">Long-term</option><option value=\"shortterm\">Short-term</option></select></div><div class=\"fl\"><label>Amount (KWD) *</label><input id=\"liab-v\" type=\"number\" min=\"0\" step=\".001\"/></div></div><div class=\"fr\"><div class=\"fl\"><label>Date added</label><input id=\"liab-dt\" type=\"date\"/></div><div class=\"fl\"><label>Due date</label><input id=\"liab-due\" type=\"date\"/></div></div><div class=\"fl\"><label>Notes</label><textarea id=\"liab-nt\"></textarea></div><div class=\"ma\"><button class=\"btn\" id=\"m-liab-x\">Cancel</button><button class=\"btn btn-g\" id=\"m-liab-ok\">Save</button></div></div>";document.body.appendChild(b);}})()
 
+
+// ─── ENTITY INFO ──────────────────────────────────────────────────────────
+window.saveEntityInfo = function(){
+  DB.entityInfo = {
+    nameEn: document.getElementById('rpt-name-en')?.value || 'Fine Edge Carpentry',
+    nameAr: document.getElementById('rpt-name-ar')?.value || 'فاين إيدج للنجارة',
+    civilId: document.getElementById('rpt-civilid')?.value || '',
+    entityType: document.getElementById('rpt-entity-type')?.value || 'sole',
+    fyStart: document.getElementById('rpt-fy-start')?.value || '',
+    fyEnd: document.getElementById('rpt-fy-end')?.value || '',
+    activity: document.getElementById('rpt-activity')?.value || 'Carpentry & Furniture Manufacturing',
+    auditor: document.getElementById('rpt-auditor')?.value || ''
+  };
+  save();
+  alert('Entity info saved ✅');
+};
+
+// ─── RENDER REPORTS PAGE ──────────────────────────────────────────────────
+window.rReports = function(){
+  // Load saved entity info into fields
+  const ei = DB.entityInfo || {};
+  const setVal = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+  setVal('rpt-name-en', ei.nameEn || 'Fine Edge Carpentry');
+  setVal('rpt-name-ar', ei.nameAr || 'فاين إيدج للنجارة');
+  setVal('rpt-civilid', ei.civilId || '');
+  setVal('rpt-entity-type', ei.entityType || 'sole');
+  setVal('rpt-fy-start', ei.fyStart || new Date().getFullYear()+'-01-01');
+  setVal('rpt-fy-end', ei.fyEnd || new Date().getFullYear()+'-12-31');
+  setVal('rpt-activity', ei.activity || 'Carpentry & Furniture Manufacturing');
+  setVal('rpt-auditor', ei.auditor || '');
+
+  // Build P&L figures
+  const pl = calcPL();
+  const fmt = v => 'KWD ' + v.toFixed(3);
+  const periodLabel = ei.fyStart && ei.fyEnd ? ei.fyStart + ' to ' + ei.fyEnd : 'Current Period';
+  const lbl = document.getElementById('rpt-period-label');
+  if(lbl) lbl.textContent = '— ' + periodLabel;
+
+  const rows = [
+    {label:'Revenue from Contracts', value:pl.revenue, bold:false, indent:1},
+    {label:'Other Income (Cash Sales)', value:pl.cashRevenue, bold:false, indent:1},
+    {label:'TOTAL REVENUE', value:pl.totalRevenue, bold:true, indent:0, border:true},
+    {label:'', value:null},
+    {label:'Cost of Materials', value:-pl.materials, bold:false, indent:1},
+    {label:'Labor Costs', value:-pl.labor, bold:false, indent:1},
+    {label:'Transport & Delivery', value:-pl.transport, bold:false, indent:1},
+    {label:'GROSS PROFIT', value:pl.grossProfit, bold:true, indent:0, border:true},
+    {label:'', value:null},
+    {label:'Employee Salaries', value:-pl.salaries, bold:false, indent:1},
+    {label:'Rent Expense', value:-pl.rent, bold:false, indent:1},
+    {label:'Shared Materials & Overhead', value:-pl.shared, bold:false, indent:1},
+    {label:'Other Operating Expenses', value:-pl.otherExp, bold:false, indent:1},
+    {label:'TOTAL OPERATING EXPENSES', value:-(pl.salaries+pl.rent+pl.shared+pl.otherExp), bold:true, indent:0},
+    {label:'', value:null},
+    {label:'NET PROFIT / (LOSS)', value:pl.netProfit, bold:true, indent:0, border:true, highlight:true},
+    {label:'', value:null},
+    {label:'Trade Receivables (Pending)', value:pl.receivables, bold:false, indent:1},
+    {label:'Cash & Cash Equivalents', value:pl.cash, bold:false, indent:1}
+  ];
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += '<thead><tr style="background:var(--bg2)"><th style="text-align:left;padding:6px 8px;color:var(--text2);font-size:11px;text-transform:uppercase">Description</th><th style="text-align:right;padding:6px 8px;color:var(--text2);font-size:11px;text-transform:uppercase">Amount (KWD)</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    if(!r.label){ html += '<tr><td colspan="2" style="padding:4px"></td></tr>'; return; }
+    const bg = r.highlight ? (r.value>=0?'background:var(--bg3)':'background:#fff0f0') : '';
+    const fw = r.bold ? 'font-weight:600' : '';
+    const pl2 = r.indent ? 'padding-left:'+(r.indent*20)+'px' : '';
+    const bt = r.border ? 'border-top:2px solid var(--border2)' : '';
+    const col = r.value !== null && r.value < 0 ? 'color:var(--red)' : (r.highlight && r.value>=0 ? 'color:var(--green)' : '');
+    html += '<tr style="'+bg+bt+'"><td style="padding:5px 8px;'+fw+';'+pl2+'">'+r.label+'</td>';
+    html += '<td style="padding:5px 8px;text-align:right;'+fw+';'+col+'">'+(r.value!==null ? fmt(r.value) : '')+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  const tbl = document.getElementById('rpt-pl-table');
+  if(tbl) tbl.innerHTML = html;
+};
+
+// ─── CALCULATE P&L ────────────────────────────────────────────────────────
+window.calcPL = function(){
+  const invPaid = DB.invoices.filter(i=>i.status==='Paid'&&!String(i.notes||'').startsWith('\uD83D\uDCB5 Cash payment'));
+  const invCash = DB.invoices.filter(i=>String(i.notes||'').startsWith('\uD83D\uDCB5 Cash payment'));
+  const invPending = DB.invoices.filter(i=>i.status==='Pending');
+  const revenue = invPaid.reduce((s,i)=>s+i.amount,0);
+  const cashRevenue = invCash.reduce((s,i)=>s+i.amount,0);
+  const totalRevenue = revenue + cashRevenue;
+  const receivables = invPending.reduce((s,i)=>s+i.amount,0);
+
+  const expByCat = {};
+  (DB.expenses||[]).forEach(e=>{ expByCat[e.cat]=(expByCat[e.cat]||0)+e.amount; });
+  const materials = expByCat['Materials']||0;
+  const labor = expByCat['Labor']||0;
+  const transport = expByCat['Transport']||0;
+  const otherExp = Object.entries(expByCat).filter(([k])=>!['Materials','Labor','Transport'].includes(k)).reduce((s,[,v])=>s+v,0);
+  const costOfSales = materials + labor + transport;
+  const grossProfit = totalRevenue - costOfSales;
+
+  const salaries = (DB.salaryPayments||[]).reduce((s,p)=>s+p.amount,0);
+  const rent = (DB.rentPayments||[]).reduce((s,p)=>s+p.amount,0);
+  const shared = (DB.sharedExpenses||[]).reduce((s,e)=>s+e.amount,0);
+  const totalOpex = salaries + rent + shared + otherExp;
+  const netProfit = grossProfit - totalOpex;
+  const {b:cash} = cashBal();
+
+  return {revenue,cashRevenue,totalRevenue,materials,labor,transport,costOfSales,grossProfit,salaries,rent,shared,otherExp,totalOpex,netProfit,receivables,cash};
+};
+
+// ─── EXPORT PDF ───────────────────────────────────────────────────────────
+window.exportPL = function(fmt){
+  const pl = calcPL();
+  const ei = DB.entityInfo || {};
+  const nameEn = ei.nameEn || 'Fine Edge Carpentry';
+  const nameAr = ei.nameAr || 'فاين إيدج للنجارة';
+  const civilId = ei.civilId || 'N/A';
+  const fyStart = ei.fyStart || '2026-01-01';
+  const fyEnd = ei.fyEnd || '2026-12-31';
+  const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+
+  if(fmt==='excel'){
+    // Build CSV (opens in Excel)
+    const rows = [
+      ['Fine Edge Carpentry — Income Statement (P&L)',''],
+      [nameEn + ' / ' + nameAr,''],
+      ['Civil ID: '+civilId,''],
+      ['Period: '+fyStart+' to '+fyEnd,''],
+      ['Prepared: '+today,''],
+      ['',''],
+      ['INCOME STATEMENT',''],
+      ['Description','Amount (KWD)'],
+      ['Revenue from Contracts (Invoiced)',pl.revenue.toFixed(3)],
+      ['Other Income (Cash Sales)',pl.cashRevenue.toFixed(3)],
+      ['TOTAL REVENUE',pl.totalRevenue.toFixed(3)],
+      ['',''],
+      ['COST OF SALES',''],
+      ['  Materials',(-pl.materials).toFixed(3)],
+      ['  Labor Costs',(-pl.labor).toFixed(3)],
+      ['  Transport & Delivery',(-pl.transport).toFixed(3)],
+      ['GROSS PROFIT',pl.grossProfit.toFixed(3)],
+      ['',''],
+      ['OPERATING EXPENSES',''],
+      ['  Employee Salaries',(-pl.salaries).toFixed(3)],
+      ['  Rent Expense',(-pl.rent).toFixed(3)],
+      ['  Shared Materials & Overhead',(-pl.shared).toFixed(3)],
+      ['  Other Expenses',(-pl.otherExp).toFixed(3)],
+      ['TOTAL OPERATING EXPENSES',(-(pl.salaries+pl.rent+pl.shared+pl.otherExp)).toFixed(3)],
+      ['',''],
+      ['NET PROFIT / (LOSS)',pl.netProfit.toFixed(3)],
+      ['',''],
+      ['SUPPLEMENTARY',''],
+      ['Trade Receivables (Pending Invoices)',pl.receivables.toFixed(3)],
+      ['Cash & Cash Equivalents',pl.cash.toFixed(3)],
+      ['',''],
+      ['Note: Prepared in accordance with IFRS for SMEs',''],
+      ['Currency: Kuwaiti Dinar (KWD)','']
+    ];
+    const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nameEn.replace(/\s+/g,'_')+'_PL_'+fyStart.slice(0,4)+'.csv';
+    a.click();
+    return;
+  }
+
+  // PDF via print window
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  body{font-family:Arial,sans-serif;font-size:12px;color:#1a1915;margin:0;padding:20px}
+  .header{text-align:center;border-bottom:3px double #1a1915;padding-bottom:12px;margin-bottom:16px}
+  .co-name{font-size:20px;font-weight:700;letter-spacing:1px}
+  .co-ar{font-size:16px;direction:rtl;color:#555;margin-top:4px}
+  .meta{font-size:11px;color:#666;margin-top:6px}
+  .title{font-size:15px;font-weight:700;text-align:center;margin:12px 0;text-transform:uppercase;letter-spacing:2px;color:#0F6E56}
+  table{width:100%;border-collapse:collapse;margin-bottom:8px}
+  td{padding:5px 8px}
+  .section-head{background:#f0efe9;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#666;padding:4px 8px}
+  .total-row td{border-top:2px solid #1a1915;font-weight:700}
+  .net-row td{border-top:3px double #1a1915;border-bottom:3px double #1a1915;font-weight:700;font-size:13px;color:#0F6E56}
+  .indent{padding-left:24px!important}
+  .right{text-align:right}
+  .red{color:#D85A30}
+  .footer{margin-top:24px;font-size:10px;color:#888;border-top:1px solid #ddd;padding-top:8px}
+  @media print{body{margin:0}}
+</style></head><body>
+<div class="header">
+  <div class="co-name">${nameEn}</div>
+  <div class="co-ar">${nameAr}</div>
+  <div class="meta">Civil ID / Commercial Reg: ${civilId} &nbsp;|&nbsp; Activity: ${ei.activity||'Carpentry & Furniture Manufacturing'}</div>
+  <div class="meta">Period: ${fyStart} to ${fyEnd} &nbsp;|&nbsp; Currency: Kuwaiti Dinar (KWD)</div>
+</div>
+<div class="title">Income Statement (Profit & Loss)</div>
+<table>
+  <tr><td class="section-head" colspan="2">Revenue</td></tr>
+  <tr><td class="indent">Revenue from Contracts (Invoiced)</td><td class="right">${pl.revenue.toFixed(3)}</td></tr>
+  <tr><td class="indent">Other Income (Cash Sales)</td><td class="right">${pl.cashRevenue.toFixed(3)}</td></tr>
+  <tr class="total-row"><td><b>Total Revenue</b></td><td class="right"><b>${pl.totalRevenue.toFixed(3)}</b></td></tr>
+
+  <tr><td colspan="2" style="padding:6px"></td></tr>
+  <tr><td class="section-head" colspan="2">Cost of Sales</td></tr>
+  <tr><td class="indent">Materials & Supplies</td><td class="right red">(${pl.materials.toFixed(3)})</td></tr>
+  <tr><td class="indent">Labor Costs</td><td class="right red">(${pl.labor.toFixed(3)})</td></tr>
+  <tr><td class="indent">Transport & Delivery</td><td class="right red">(${pl.transport.toFixed(3)})</td></tr>
+  <tr class="total-row"><td><b>Gross Profit</b></td><td class="right"><b>${pl.grossProfit.toFixed(3)}</b></td></tr>
+
+  <tr><td colspan="2" style="padding:6px"></td></tr>
+  <tr><td class="section-head" colspan="2">Operating Expenses</td></tr>
+  <tr><td class="indent">Employee Salaries &amp; Benefits</td><td class="right red">(${pl.salaries.toFixed(3)})</td></tr>
+  <tr><td class="indent">Rent Expense</td><td class="right red">(${pl.rent.toFixed(3)})</td></tr>
+  <tr><td class="indent">Shared Materials &amp; Overhead</td><td class="right red">(${pl.shared.toFixed(3)})</td></tr>
+  <tr><td class="indent">Other Operating Expenses</td><td class="right red">(${pl.otherExp.toFixed(3)})</td></tr>
+  <tr class="total-row"><td><b>Total Operating Expenses</b></td><td class="right red"><b>(${(pl.salaries+pl.rent+pl.shared+pl.otherExp).toFixed(3)})</b></td></tr>
+
+  <tr><td colspan="2" style="padding:6px"></td></tr>
+  <tr class="net-row"><td><b>Net Profit / (Loss) for the Period</b></td><td class="right"><b>${pl.netProfit.toFixed(3)}</b></td></tr>
+
+  <tr><td colspan="2" style="padding:10px"></td></tr>
+  <tr><td class="section-head" colspan="2">Supplementary Information</td></tr>
+  <tr><td class="indent">Trade Receivables (Pending Invoices)</td><td class="right">${pl.receivables.toFixed(3)}</td></tr>
+  <tr><td class="indent">Cash &amp; Cash Equivalents</td><td class="right">${pl.cash.toFixed(3)}</td></tr>
+</table>
+<div class="footer">
+  Prepared on ${today} &nbsp;|&nbsp; Prepared in accordance with IFRS for SMEs &nbsp;|&nbsp; Currency: Kuwaiti Dinar (KWD) &nbsp;|&nbsp; All amounts in KWD
+  ${ei.auditor ? '<br>Auditor: '+ei.auditor : ''}
+  <br><br>This report is prepared for submission to the Ministry of Commerce and Industry of Kuwait (Qayd/XBRL system).
+</div>
+</body></html>`;
+  const w = window.open('','_blank','width=800,height=900');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),500);
+};
+
+// ─── EXPORT XBRL XML ──────────────────────────────────────────────────────
+window.exportXBRL = function(){
+  const pl = calcPL();
+  const ei = DB.entityInfo || {};
+  const nameEn = ei.nameEn || 'Fine Edge Carpentry';
+  const civilId = ei.civilId || 'ENTER-CIVIL-ID';
+  const fyStart = ei.fyStart || new Date().getFullYear()+'-01-01';
+  const fyEnd = ei.fyEnd || new Date().getFullYear()+'-12-31';
+  const today = new Date().toISOString().split('T')[0];
+  const ccy = 'KWD';
+  const decimals = '3';
+
+  const xbrl = `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  XBRL Instance Document
+  Prepared for: ${nameEn}
+  Taxonomy: IFRS for SMEs
+  Regulator: Kuwait Ministry of Commerce and Industry (Qayd System)
+  Period: ${fyStart} to ${fyEnd}
+  Generated: ${today}
+  NOTE: Review all values before submitting to Qayd platform.
+        Entity-specific tags may need adjustment by a certified auditor.
+-->
+<xbrl
+  xmlns="http://www.xbrl.org/2003/instance"
+  xmlns:xbrli="http://www.xbrl.org/2003/instance"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+  xmlns:ifrs-sme="http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme"
+  xmlns:dei="http://xbrl.sec.gov/dei/2021"
+  xsi:schemaLocation="http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme
+    http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme/ifrs-sme.xsd">
+
+  <!-- ═══════════════════════════════════════════════
+       CONTEXT DEFINITIONS
+  ═══════════════════════════════════════════════ -->
+  <xbrli:context id="CurrentPeriod">
+    <xbrli:entity>
+      <xbrli:identifier scheme="http://www.moci.gov.kw">${civilId}</xbrli:identifier>
+    </xbrli:entity>
+    <xbrli:period>
+      <xbrli:startDate>${fyStart}</xbrli:startDate>
+      <xbrli:endDate>${fyEnd}</xbrli:endDate>
+    </xbrli:period>
+  </xbrli:context>
+
+  <xbrli:context id="PeriodEnd">
+    <xbrli:entity>
+      <xbrli:identifier scheme="http://www.moci.gov.kw">${civilId}</xbrli:identifier>
+    </xbrli:entity>
+    <xbrli:period>
+      <xbrli:instant>${fyEnd}</xbrli:instant>
+    </xbrli:period>
+  </xbrli:context>
+
+  <!-- ═══════════════════════════════════════════════
+       UNIT DEFINITIONS
+  ═══════════════════════════════════════════════ -->
+  <xbrli:unit id="KWD">
+    <xbrli:measure>iso4217:KWD</xbrli:measure>
+  </xbrli:unit>
+
+  <!-- ═══════════════════════════════════════════════
+       ENTITY INFORMATION
+  ═══════════════════════════════════════════════ -->
+  <dei:EntityRegistrantName contextRef="CurrentPeriod">${nameEn}</dei:EntityRegistrantName>
+  <dei:EntityCentralIndexKey contextRef="CurrentPeriod">${civilId}</dei:EntityCentralIndexKey>
+  <dei:DocumentPeriodEndDate contextRef="CurrentPeriod">${fyEnd}</dei:DocumentPeriodEndDate>
+  <dei:DocumentType contextRef="CurrentPeriod">Annual Report</dei:DocumentType>
+
+  <!-- ═══════════════════════════════════════════════
+       INCOME STATEMENT (IFRS for SMEs Section 5)
+  ═══════════════════════════════════════════════ -->
+
+  <!-- Revenue -->
+  <ifrs-sme:Revenue contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.revenue.toFixed(3)}</ifrs-sme:Revenue>
+
+  <!-- Other Income (Cash Sales) -->
+  <ifrs-sme:OtherIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.cashRevenue.toFixed(3)}</ifrs-sme:OtherIncome>
+
+  <!-- Cost of Sales breakdown -->
+  <ifrs-sme:CostOfSales contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.costOfSales.toFixed(3)}</ifrs-sme:CostOfSales>
+  <ifrs-sme:RawMaterialsAndConsumablesUsed contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.materials.toFixed(3)}</ifrs-sme:RawMaterialsAndConsumablesUsed>
+
+  <!-- Gross Profit -->
+  <ifrs-sme:GrossProfit contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.grossProfit.toFixed(3)}</ifrs-sme:GrossProfit>
+
+  <!-- Operating Expenses -->
+  <ifrs-sme:EmployeeBenefitsExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.salaries.toFixed(3)}</ifrs-sme:EmployeeBenefitsExpense>
+  <ifrs-sme:RentalExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.rent.toFixed(3)}</ifrs-sme:RentalExpense>
+  <ifrs-sme:OtherExpenses contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${(pl.shared+pl.otherExp).toFixed(3)}</ifrs-sme:OtherExpenses>
+
+  <!-- Net Profit -->
+  <ifrs-sme:ProfitLoss contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.netProfit.toFixed(3)}</ifrs-sme:ProfitLoss>
+  <ifrs-sme:ProfitLossFromOperatingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="${decimals}">${pl.netProfit.toFixed(3)}</ifrs-sme:ProfitLossFromOperatingActivities>
+
+  <!-- ═══════════════════════════════════════════════
+       BALANCE SHEET (IFRS for SMEs Section 4)
+       Statement of Financial Position
+  ═══════════════════════════════════════════════ -->
+
+  <!-- Current Assets -->
+  <ifrs-sme:CashAndCashEquivalents contextRef="PeriodEnd" unitRef="KWD" decimals="${decimals}">${pl.cash.toFixed(3)}</ifrs-sme:CashAndCashEquivalents>
+  <ifrs-sme:TradeAndOtherReceivables contextRef="PeriodEnd" unitRef="KWD" decimals="${decimals}">${pl.receivables.toFixed(3)}</ifrs-sme:TradeAndOtherReceivables>
+
+  <!-- Assets from Balance Sheet module -->${(DB.assets||[]).filter(a=>a.cat==='fixed').length>0 ? '\n  <ifrs-sme:PropertyPlantAndEquipment contextRef="PeriodEnd" unitRef="KWD" decimals="'+decimals+'">'+(DB.assets||[]).filter(a=>a.cat==='fixed').reduce((s,a)=>s+a.value,0).toFixed(3)+'</ifrs-sme:PropertyPlantAndEquipment>' : '\n  <!-- PropertyPlantAndEquipment: add fixed assets in Balance Sheet section -->'}
+${(DB.assets||[]).filter(a=>a.cat==='current').length>0 ? '  <ifrs-sme:OtherCurrentAssets contextRef="PeriodEnd" unitRef="KWD" decimals="'+decimals+'">'+(DB.assets||[]).filter(a=>a.cat==='current').reduce((s,a)=>s+a.value,0).toFixed(3)+'</ifrs-sme:OtherCurrentAssets>' : '  <!-- OtherCurrentAssets: add current assets in Balance Sheet section -->'}
+
+  <!-- Total Assets -->
+  <ifrs-sme:Assets contextRef="PeriodEnd" unitRef="KWD" decimals="${decimals}">${(pl.cash + pl.receivables + (DB.assets||[]).reduce((s,a)=>s+a.value,0)).toFixed(3)}</ifrs-sme:Assets>
+
+  <!-- Liabilities -->${(DB.liabilities||[]).filter(l=>l.cat==='longterm').length>0 ? '\n  <ifrs-sme:NoncurrentLiabilities contextRef="PeriodEnd" unitRef="KWD" decimals="'+decimals+'">'+(DB.liabilities||[]).filter(l=>l.cat==='longterm').reduce((s,l)=>s+l.value,0).toFixed(3)+'</ifrs-sme:NoncurrentLiabilities>' : '\n  <!-- NoncurrentLiabilities: add long-term liabilities in Balance Sheet section -->'}
+${(DB.liabilities||[]).filter(l=>l.cat==='shortterm').length>0 ? '  <ifrs-sme:CurrentLiabilities contextRef="PeriodEnd" unitRef="KWD" decimals="'+decimals+'">'+(DB.liabilities||[]).filter(l=>l.cat==='shortterm').reduce((s,l)=>s+l.value,0).toFixed(3)+'</ifrs-sme:CurrentLiabilities>' : '  <!-- CurrentLiabilities: add short-term liabilities in Balance Sheet section -->'}
+  <ifrs-sme:Liabilities contextRef="PeriodEnd" unitRef="KWD" decimals="${decimals}">${(DB.liabilities||[]).reduce((s,l)=>s+l.value,0).toFixed(3)}</ifrs-sme:Liabilities>
+
+  <!-- Equity -->
+  <ifrs-sme:RetainedEarnings contextRef="PeriodEnd" unitRef="KWD" decimals="${decimals}">${pl.netProfit.toFixed(3)}</ifrs-sme:RetainedEarnings>
+  <ifrs-sme:Equity contextRef="PeriodEnd" unitRef="KWD" decimals="${decimals}">${(pl.cash + pl.receivables + (DB.assets||[]).reduce((s,a)=>s+a.value,0) - (DB.liabilities||[]).reduce((s,l)=>s+l.value,0)).toFixed(3)}</ifrs-sme:Equity>
+
+  <!-- ═══════════════════════════════════════════════
+       EMPLOYEE INFORMATION (IAS 19)
+  ═══════════════════════════════════════════════ -->
+  <ifrs-sme:NumberOfEmployees contextRef="CurrentPeriod" decimals="0">${(DB.employees||[]).length}</ifrs-sme:NumberOfEmployees>
+
+</xbrl>`;
+
+  const blob = new Blob([xbrl],{type:'application/xml;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (nameEn.replace(/\s+/g,'_'))+'_XBRL_'+fyEnd+'.xml';
+  a.click();
+  alert('XBRL XML downloaded! \n\nNext steps:\n1. Review the XML file\n2. Have your auditor verify the values\n3. Upload to Kuwait Business Center (Qayd platform)\n\nFiling is optional in 2026, mandatory from Jan 2027.');
+};
 </script>
 </body>
 </html>
