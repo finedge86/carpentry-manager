@@ -554,13 +554,27 @@ const supa = {
     return (rows && rows[0]) ? rows[0].data : null;
   },
   async saveData(userId, data) {
-    // Upsert
-    const r = await fetch(SUPA_URL+'/rest/v1/carpentry_data', {
-      method: 'POST',
-      headers: {...supa.authHeaders(), 'Prefer': 'resolution=merge-duplicates'},
-      body: JSON.stringify({user_id: userId, data: data})
-    });
-    return r.ok;
+    // Try save, if 401 refresh token and retry once
+    const doSave = async () => {
+      const r = await fetch(SUPA_URL+'/rest/v1/carpentry_data', {
+        method: 'POST',
+        headers: {...supa.authHeaders(), 'Prefer': 'resolution=merge-duplicates'},
+        body: JSON.stringify({user_id: userId, data: data})
+      });
+      if (!r.ok) {
+        const err = await r.text();
+        console.error('Save error:', r.status, err);
+        return {ok: false, status: r.status, err};
+      }
+      return {ok: true};
+    };
+    let result = await doSave();
+    if (!result.ok && result.status === 401) {
+      // Token expired - refresh and retry
+      await supa.refreshToken();
+      result = await doSave();
+    }
+    return result.ok;
   },
   async resetPassword(email) {
     const r = await fetch(SUPA_URL+'/auth/v1/recover', {method:'POST', headers: supa.headers, body: JSON.stringify({email})});
@@ -645,21 +659,25 @@ async function checkExistingSession() {
   const email = localStorage.getItem('sb_user_email');
   const token = localStorage.getItem('sb_access_token');
   if (!userId || !token) return;
-  // Try refresh
   try {
+    // Always refresh token first on load
     const ref = await supa.refreshToken();
     if (ref && ref.access_token) {
       await initApp(userId, email);
       return;
     }
-  } catch(e) {}
-  // Try existing token
+  } catch(e) { console.warn('Refresh failed:', e); }
   try {
+    // Fall back to existing token
     const testData = await supa.loadData(userId);
     if (testData !== undefined) {
       await initApp(userId, email);
+      return;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Load failed:', e); }
+  // Token fully expired - clear and show login
+  localStorage.removeItem('sb_access_token');
+  localStorage.removeItem('sb_refresh_token');
 }
 
 function showSyncBar(msg, type='ok') {
@@ -678,12 +696,28 @@ const TM = T.slice(0,7);
 let DB = {clients:[],projects:[],invoices:[],expenses:[],employees:[],rentPayments:[],salaryPayments:[],sharedExpenses:[],cashTransactions:[],assets:[],liabilities:[]};
 
 const save = () => {
-  if (!currentUserId) return;
+  if (!currentUserId) { showSyncBar('⚠️ Not logged in', 'err'); return; }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     showSyncBar('⟳ Saving...', 'ok');
-    const ok = await supa.saveData(currentUserId, DB);
-    showSyncBar(ok ? '✅ Saved' : '❌ Save failed', ok ? 'ok' : 'err');
+    try {
+      const ok = await supa.saveData(currentUserId, DB);
+      if (ok) {
+        showSyncBar('✅ Saved', 'ok');
+        // Also keep local backup
+        try { localStorage.setItem('carpv3_backup', JSON.stringify(DB)); } catch(e){}
+      } else {
+        showSyncBar('❌ Save failed — check connection', 'err');
+        // Try token refresh and save again after 3s
+        setTimeout(async () => {
+          await supa.refreshToken();
+          const ok2 = await supa.saveData(currentUserId, DB);
+          showSyncBar(ok2 ? '✅ Saved (retry)' : '❌ Still failing — export backup!', ok2 ? 'ok' : 'err');
+        }, 3000);
+      }
+    } catch(e) {
+      showSyncBar('❌ Network error: ' + e.message, 'err');
+    }
   }, 800);
 };
 
