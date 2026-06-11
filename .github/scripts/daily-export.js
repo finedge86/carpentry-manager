@@ -179,6 +179,10 @@ Fine Edge Carpentry Manager • Auto-sent daily at 11:00 PM Kuwait Time
 </div>
 </div></body></html>`;
 
+  // Build JSON backup (importable into the app)
+  const jsonB64 = Buffer.from(JSON.stringify(DB, null, 2), 'utf-8').toString('base64');
+  console.log('JSON backup prepared, size:', Buffer.from(JSON.stringify(DB)).length, 'bytes');
+
   // Send via Resend
   console.log('Sending email to', TO_EMAIL);
   const emailRes = await httpsReq('POST', 'api.resend.com', '/emails',
@@ -188,7 +192,10 @@ Fine Edge Carpentry Manager • Auto-sent daily at 11:00 PM Kuwait Time
       to: [TO_EMAIL],
       subject: 'Fine Edge Daily Report — ' + dateStr,
       html: emailHTML,
-      attachments: [{ filename: 'fineedge-backup-' + todayStr + '.csv', content: csvB64 }]
+      attachments: [
+        { filename: 'fineedge-backup-' + todayStr + '.csv', content: csvB64 },
+        { filename: 'fineedge-backup-' + todayStr + '.json', content: jsonB64 }
+      ]
     }
   );
 
