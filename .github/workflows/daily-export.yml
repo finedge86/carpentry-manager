@@ -4,7 +4,7 @@ on:
   schedule:
     # 20:00 UTC = 23:00 Kuwait time (UTC+3)
     - cron: '0 20 * * *'
-  workflow_dispatch: # allows manual trigger too
+  workflow_dispatch:
 
 jobs:
   send-daily-report:
