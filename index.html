@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Fine Edge — Carpentry Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -510,75 +511,46 @@ tr:hover td{background:var(--bg3)}
 'use strict';
 
 // ══════════════════════════════════════════════════════
-// SUPABASE CONFIG
+// SUPABASE CONFIG — using official SDK
 // ══════════════════════════════════════════════════════
 const SUPA_URL = 'https://bqljghqeodliivjupgqw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbGpnaHFlb2RsaWl2anVwZ3F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTkxMzMsImV4cCI6MjA5NjczNTEzM30.NM9HWPRWPV1gBrRSQfQulMOYWAbl6mJVD_ZAiMFxclU';
+const { createClient } = supabase;
+const _sb = createClient(SUPA_URL, SUPA_KEY);
 
 const supa = {
-  headers: {'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'},
-  authHeaders: () => {
-    const t = localStorage.getItem('sb_access_token');
-    return {'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + (t || SUPA_KEY), 'Content-Type': 'application/json'};
-  },
   async signUp(email, password) {
-    const r = await fetch(SUPA_URL+'/auth/v1/signup', {method:'POST', headers: supa.headers, body: JSON.stringify({email, password})});
-    return r.json();
+    const { data, error } = await _sb.auth.signUp({ email, password });
+    if (error) return { error_description: error.message };
+    return data;
   },
   async signIn(email, password) {
-    const r = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password', {method:'POST', headers: supa.headers, body: JSON.stringify({email, password})});
-    return r.json();
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password });
+    if (error) return { error_description: error.message };
+    return { access_token: data.session.access_token, user: data.user };
   },
   async signOut() {
-    const t = localStorage.getItem('sb_access_token');
-    await fetch(SUPA_URL+'/auth/v1/logout', {method:'POST', headers: {'apikey': SUPA_KEY, 'Authorization': 'Bearer '+(t||''), 'Content-Type':'application/json'}});
-    localStorage.removeItem('sb_access_token');
-    localStorage.removeItem('sb_refresh_token');
+    await _sb.auth.signOut();
     localStorage.removeItem('sb_user_id');
     localStorage.removeItem('sb_user_email');
   },
   async refreshToken() {
-    const rt = localStorage.getItem('sb_refresh_token');
-    if (!rt) return null;
-    const r = await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token', {method:'POST', headers: supa.headers, body: JSON.stringify({refresh_token: rt})});
-    const data = await r.json();
-    if (data.access_token) {
-      localStorage.setItem('sb_access_token', data.access_token);
-      if (data.refresh_token) localStorage.setItem('sb_refresh_token', data.refresh_token);
-    }
+    const { data } = await _sb.auth.refreshSession();
     return data;
   },
   async loadData(userId) {
-    const r = await fetch(SUPA_URL+'/rest/v1/carpentry_data?user_id=eq.'+userId+'&select=data', {headers: supa.authHeaders()});
-    const rows = await r.json();
-    return (rows && rows[0]) ? rows[0].data : null;
+    const { data, error } = await _sb.from('carpentry_data').select('data').eq('user_id', userId).single();
+    if (error && error.code !== 'PGRST116') { console.error('Load error:', error); return null; }
+    return data ? data.data : null;
   },
-  async saveData(userId, data) {
-    // Try save, if 401 refresh token and retry once
-    const doSave = async () => {
-      const r = await fetch(SUPA_URL+'/rest/v1/carpentry_data', {
-        method: 'POST',
-        headers: {...supa.authHeaders(), 'Prefer': 'resolution=merge-duplicates'},
-        body: JSON.stringify({user_id: userId, data: data})
-      });
-      if (!r.ok) {
-        const err = await r.text();
-        console.error('Save error:', r.status, err);
-        return {ok: false, status: r.status, err};
-      }
-      return {ok: true};
-    };
-    let result = await doSave();
-    if (!result.ok && result.status === 401) {
-      // Token expired - refresh and retry
-      await supa.refreshToken();
-      result = await doSave();
-    }
-    return result.ok;
+  async saveData(userId, dbData) {
+    const { error } = await _sb.from('carpentry_data').upsert({ user_id: userId, data: dbData }, { onConflict: 'user_id' });
+    if (error) { console.error('Save error:', error); return false; }
+    return true;
   },
   async resetPassword(email) {
-    const r = await fetch(SUPA_URL+'/auth/v1/recover', {method:'POST', headers: supa.headers, body: JSON.stringify({email})});
-    return r.json();
+    const { error } = await _sb.auth.resetPasswordForEmail(email);
+    return error ? { error: error.message } : { ok: true };
   }
 };
 
@@ -610,8 +582,8 @@ async function doAuth() {
   document.getElementById('auth-ok').textContent = '';
   try {
     const data = authTab==='login' ? await supa.signIn(email, pass) : await supa.signUp(email, pass);
-    if (data.error || data.error_description || data.msg) {
-      document.getElementById('auth-err').textContent = data.error_description || data.msg || data.error || 'Error occurred';
+    if (data.error_description) {
+      document.getElementById('auth-err').textContent = data.error_description;
       btn.disabled = false;
       btn.textContent = authTab==='login' ? 'Sign In' : 'Create Account';
       return;
@@ -624,14 +596,12 @@ async function doAuth() {
       return;
     }
     if (data.access_token) {
-      localStorage.setItem('sb_access_token', data.access_token);
-      if (data.refresh_token) localStorage.setItem('sb_refresh_token', data.refresh_token);
       localStorage.setItem('sb_user_id', data.user.id);
       localStorage.setItem('sb_user_email', data.user.email);
       await initApp(data.user.id, data.user.email);
     }
   } catch(e) {
-    document.getElementById('auth-err').textContent = 'Network error. Check connection.';
+    document.getElementById('auth-err').textContent = 'Network error: ' + e.message;
     btn.disabled = false;
     btn.textContent = authTab==='login' ? 'Sign In' : 'Create Account';
   }
@@ -646,7 +616,10 @@ async function doForgot() {
 
 async function doSignOut() {
   await supa.signOut();
+  localStorage.removeItem('sb_user_id');
+  localStorage.removeItem('sb_user_email');
   currentUserId = null;
+  DB = {clients:[],projects:[],invoices:[],expenses:[],employees:[],rentPayments:[],salaryPayments:[],sharedExpenses:[],cashTransactions:[],assets:[],liabilities:[]};
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('auth-err').textContent = '';
   document.getElementById('auth-ok').textContent = '';
@@ -655,29 +628,13 @@ async function doSignOut() {
 }
 
 async function checkExistingSession() {
-  const userId = localStorage.getItem('sb_user_id');
-  const email = localStorage.getItem('sb_user_email');
-  const token = localStorage.getItem('sb_access_token');
-  if (!userId || !token) return;
-  try {
-    // Always refresh token first on load
-    const ref = await supa.refreshToken();
-    if (ref && ref.access_token) {
-      await initApp(userId, email);
-      return;
-    }
-  } catch(e) { console.warn('Refresh failed:', e); }
-  try {
-    // Fall back to existing token
-    const testData = await supa.loadData(userId);
-    if (testData !== undefined) {
-      await initApp(userId, email);
-      return;
-    }
-  } catch(e) { console.warn('Load failed:', e); }
-  // Token fully expired - clear and show login
-  localStorage.removeItem('sb_access_token');
-  localStorage.removeItem('sb_refresh_token');
+  // SDK automatically restores session from its own storage
+  const { data: { session } } = await _sb.auth.getSession();
+  if (session && session.user) {
+    localStorage.setItem('sb_user_id', session.user.id);
+    localStorage.setItem('sb_user_email', session.user.email);
+    await initApp(session.user.id, session.user.email);
+  }
 }
 
 function showSyncBar(msg, type='ok') {
