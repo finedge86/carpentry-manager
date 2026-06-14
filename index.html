@@ -951,7 +951,80 @@ function rCli(){const tb=document.getElementById('cltb');if(!DB.clients.length){
 let selCli = null;
 function cliExpR(cid,fm2){const ids=DB.projects.filter(p=>p.clientId===cid).map(p=>p.id);return DB.expenses.filter(e=>e.projectId&&ids.includes(e.projectId)&&(fm2==='all'||!fm2||(e.date||'').startsWith(fm2)))}
 function cliData(cid,fm2){const fD=a=>fm2&&fm2!=='all'?a.filter(x=>(x.date||'').startsWith(fm2)):a;const invs=fD(DB.invoices.filter(i=>i.clientId===cid));const inc=invs.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amount,0);const exps=cliExpR(cid,fm2);const exp=exps.reduce((s,e)=>s+e.amount,0);const pend=DB.projects.filter(p=>p.clientId===cid&&p.status!=='Cancelled').reduce((s,p)=>s+prem(p),0);return{invs,inc,pend,exps,exp,pft:inc-exp,mgn:inc>0?Math.round((inc-exp)/inc*100):0}}
-function rCRpt(){const aM=[...new Set([...DB.invoices,...DB.expenses].map(x=>x.date&&x.date.slice(0,7)).filter(Boolean))].sort().reverse();const sel=document.getElementById('crf');const cv=sel.value;sel.innerHTML='<option value="all">All time</option>'+aM.map(mo=>`<option value="${mo}">${fm(mo)}</option>`).join('');if(aM.includes(cv))sel.value=cv;const m=sel.value;if(!DB.clients.length){document.getElementById('crcards').innerHTML='<div class="es">No clients yet.</div>';document.getElementById('crdet').innerHTML='';return}document.getElementById('crcards').innerHTML=DB.clients.map(c=>{const{inc,exp,pft,mgn,pend}=cliData(c.id,m);const pc=pft>=0?'var(--green)':'var(--red)';return`<div class="ccard${selCli===c.id?' sel2':''}" onclick="selCli='${c.id}';rCRpt()"><div class="cch"><div class="av">${ini(c.name)}</div><div><div style="font-weight:500;font-size:13px">${c.name}</div><div style="font-size:11px;color:var(--text2)">${c.area||c.phone||'—'}</div></div></div><div class="ccg"><div class="ccm"><div class="ccml">Income</div><div class="ccmv" style="color:var(--green)">${inc.toFixed(3)}</div></div><div class="ccm"><div class="ccml">Exp</div><div class="ccmv" style="color:var(--red)">${exp.toFixed(3)}</div></div><div class="ccm"><div class="ccml">Profit</div><div class="ccmv" style="color:${pc}">${pft.toFixed(3)}</div></div></div><div style="padding:.45rem .85rem .7rem"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:2px"><span>${mgn}% margin</span><span style="color:var(--amber)">Rem ${pend.toFixed(3)}</span></div><div class="pb" style="margin:0"><div class="pf" style="width:${Math.max(0,Math.min(100,mgn))}%;background:${pc}"></div></div></div></div>`}).join('');if(selCli){const c=DB.clients.find(x=>x.id===selCli);if(!c)return;const{invs,inc,pend,exps,exp,pft,mgn}=cliData(selCli,m);const pc=pft>=0?'var(--green)':'var(--red)';const projs=DB.projects.filter(p=>p.clientId===selCli);document.getElementById('crdet').innerHTML=`<div class="card"><div style="font-family:DM Serif Display,serif;font-size:17px;margin-bottom:1.1rem">${c.name} — Breakdown</div><div class="g4" style="margin-bottom:1.1rem"><div class="met"><div class="ml">Paid income</div><div class="mv vg" style="font-size:15px">${kwd(inc)}</div></div><div class="met"><div class="ml">Remaining</div><div class="mv va" style="font-size:15px">${kwd(pend)}</div></div><div class="met"><div class="ml">Expenses</div><div class="mv vr" style="font-size:15px">${kwd(exp)}</div></div><div class="met"><div class="ml">Net profit</div><div class="mv" style="font-size:15px;color:${pc}">${kwd(pft)}</div><div class="mh">${mgn}%</div></div></div></div>`;sel.onchange=rCRpt;}else{document.getElementById('crdet').innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--text2);font-size:13px">Click a client to see details</div>';}}
+function rCRpt(){
+  const aM=[...new Set([...DB.invoices,...DB.expenses].map(x=>x.date&&x.date.slice(0,7)).filter(Boolean))].sort().reverse();
+  const sel=document.getElementById('crf');
+  const cv=sel.value;
+  sel.innerHTML='<option value="all">All time</option>'+aM.map(mo=>'<option value="'+mo+'">'+fm(mo)+'</option>').join('');
+  if(aM.includes(cv))sel.value=cv;
+  const m=sel.value;
+  if(!DB.clients.length){
+    document.getElementById('crcards').innerHTML='<div class="es">No clients yet.</div>';
+    document.getElementById('crdet').innerHTML='';
+    return;
+  }
+  document.getElementById('crcards').innerHTML=DB.clients.map(c=>{
+    const{inc,exp,pft,mgn,pend}=cliData(c.id,m);
+    const pc=pft>=0?'var(--green)':'var(--red)';
+    const selected=selCli===c.id;
+    return '<div class="ccard'+(selected?' sel2':'')+'" data-cid="'+c.id+'" style="cursor:pointer">'
+      +'<div class="cch"><div class="av">'+ini(c.name)+'</div>'
+      +'<div><div style="font-weight:500;font-size:13px">'+c.name+'</div>'
+      +'<div style="font-size:11px;color:var(--text2)">'+(c.area||c.phone||'—')+'</div></div></div>'
+      +'<div class="ccg">'
+      +'<div class="ccm"><div class="ccml">Income</div><div class="ccmv" style="color:var(--green)">'+inc.toFixed(3)+'</div></div>'
+      +'<div class="ccm"><div class="ccml">Exp</div><div class="ccmv" style="color:var(--red)">'+exp.toFixed(3)+'</div></div>'
+      +'<div class="ccm"><div class="ccml">Profit</div><div class="ccmv" style="color:'+pc+'">'+pft.toFixed(3)+'</div></div>'
+      +'</div>'
+      +'<div style="padding:.45rem .85rem .7rem">'
+      +'<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:2px">'
+      +'<span>'+mgn+'% margin</span><span style="color:var(--amber)">Rem '+pend.toFixed(3)+'</span></div>'
+      +'<div class="pb" style="margin:0"><div class="pf" style="width:'+Math.max(0,Math.min(100,mgn))+'%;background:'+pc+'"></div></div>'
+      +'</div></div>';
+  }).join('');
+  // Attach click handlers via event delegation
+  document.getElementById('crcards').querySelectorAll('[data-cid]').forEach(el=>{
+    el.addEventListener('click',()=>{selCli=el.dataset.cid;rCRpt();});
+  });
+  if(selCli){
+    const c=DB.clients.find(x=>x.id===selCli);
+    if(!c){document.getElementById('crdet').innerHTML='';return;}
+    const{invs,inc,pend,exps,exp,pft,mgn}=cliData(selCli,m);
+    const pc=pft>=0?'var(--green)':'var(--red)';
+    const projs=DB.projects.filter(p=>p.clientId===selCli);
+    let det='<div class="card"><div style="font-family:DM Serif Display,serif;font-size:17px;margin-bottom:1.1rem">'+c.name+' — Breakdown</div>';
+    det+='<div class="g4" style="margin-bottom:1.1rem">'
+      +'<div class="met"><div class="ml">Paid income</div><div class="mv vg" style="font-size:15px">'+kwd(inc)+'</div></div>'
+      +'<div class="met"><div class="ml">Remaining</div><div class="mv va" style="font-size:15px">'+kwd(pend)+'</div></div>'
+      +'<div class="met"><div class="ml">Expenses</div><div class="mv vr" style="font-size:15px">'+kwd(exp)+'</div></div>'
+      +'<div class="met"><div class="ml">Net profit</div><div class="mv" style="font-size:15px;color:'+pc+'">'+kwd(pft)+'</div><div class="mh">'+mgn+'%</div></div>'
+      +'</div>';
+    // Projects
+    det+='<div class="g2"><div><div class="st" style="margin-top:0">Projects</div>';
+    if(!projs.length){det+='<div style="color:var(--text3);font-size:12px">None</div>';}
+    else projs.forEach(p=>{
+      const pd2=ppaid(p.id),rem=prem(p),pct2=ppct(p);
+      det+='<div style="padding:7px 0;border-bottom:1px solid var(--border)">'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px"><strong>'+p.name+'</strong>'+bg(p.status)+'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:4px;font-size:11px">'
+        +'<span>Val:'+kwd(p.value)+'</span><span style="color:var(--green)">Paid:'+kwd(pd2)+'</span><span style="color:var(--amber)">Rem:'+kwd(rem)+'</span></div>'
+        +'<div class="pb" style="margin-top:4px"><div class="pf" style="width:'+pct2+'%;background:var(--green)"></div></div>'
+        +'</div>';
+    });
+    // Invoices
+    det+='<div class="st">Invoices</div>';
+    if(!invs.length){det+='<div style="color:var(--text3);font-size:12px">None</div>';}
+    else{const sorted=[...invs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));sorted.forEach(inv=>{det+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><div><div>'+(inv.projectId?pn(inv.projectId):'General')+'</div><div style="font-size:10px;color:var(--text3)">'+fd(inv.date)+'</div></div><div style="display:flex;align-items:center;gap:5px">'+bg(inv.status)+'<span style="font-weight:500">'+kwd(inv.amount)+'</span></div></div>';});}
+    det+='</div><div><div class="st" style="margin-top:0">Expenses</div>';
+    if(!exps.length){det+='<div style="color:var(--text3);font-size:12px">None</div>';}
+    else exps.forEach(e=>{det+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><div><div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+(CC[e.cat]||'#888')+';display:inline-block"></span>'+e.desc+'</div><div style="font-size:10px;color:var(--text3)">'+e.cat+'</div></div><span style="font-weight:500;color:var(--red)">'+kwd(e.amount)+'</span></div>';});
+    det+='</div></div></div>';
+    document.getElementById('crdet').innerHTML=det;
+    sel.onchange=rCRpt;
+  }else{
+    document.getElementById('crdet').innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--text2);font-size:13px">Click a client to see details</div>';
+  }
+}
 window.rCRpt=rCRpt;
 
 // BALANCE SHEET
