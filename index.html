@@ -1298,23 +1298,24 @@ document.getElementById('auth-email').addEventListener('keydown', e => { if(e.ke
 // FULL EXCEL EXPORT
 // ══════════════════════════════════════════════════════
 window.exportFullExcel = function() {
-  if (typeof XLSX === 'undefined') { alert('Excel library not loaded yet, try again in a moment.'); return; }
+  try {
+  if (typeof XLSX === 'undefined') { alert('Excel library not loaded. Please refresh the page and try again.'); return; }
 
   const wb = XLSX.utils.book_new();
   const kf = n => (+n||0).toFixed(3);
   const today = new Date().toISOString().split('T')[0];
 
-  // Helper: style header row
+  // Helper: make sheet with column widths
   const makeSheet = (headers, rows) => {
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    // Column widths
     ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 4, 16) }));
     return ws;
   };
 
   // ── 1. SUMMARY ──
   const pl = calcPL();
-  const {i: cashIn, o: cashOut, b: cashBal} = cashBal();
+  const _cb = cashBal();
+  const cashIn = _cb.i, cashOut = _cb.o, cashBalAmt = _cb.b;
   const TM2 = today.slice(0,7);
   const mInc = DB.invoices.filter(i=>i.status==='Paid'&&(i.date||'').startsWith(TM2)).reduce((s,i)=>s+i.amount,0);
   const mExp = DB.expenses.filter(e=>(e.date||'').startsWith(TM2)).reduce((s,e)=>s+e.amount,0)
@@ -1347,7 +1348,7 @@ window.exportFullExcel = function() {
     ['CASH POSITION', ''],
     ['Total Cash In', kf(cashIn)],
     ['Total Cash Out', kf(cashOut)],
-    ['Cash Balance', kf(cashBal)],
+    ['Cash Balance', kf(cashBalAmt)],
     ['Trade Receivables (Pending)', kf(pl.receivables)],
     ['', ''],
     ['THIS MONTH ('+TM2+')', ''],
@@ -1470,7 +1471,7 @@ window.exportFullExcel = function() {
     ['', ''],
     ['SUPPLEMENTARY', ''],
     ['Trade Receivables (Pending)', kf(pl.receivables)],
-    ['Cash & Cash Equivalents', kf(cashBal)],
+    ['Cash & Cash Equivalents', kf(cashBalAmt)],
   ];
   const wspl = XLSX.utils.aoa_to_sheet([['Description','Amount (KWD)'], ...plRows]);
   wspl['!cols'] = [{wch:40},{wch:20}];
@@ -1478,6 +1479,10 @@ window.exportFullExcel = function() {
 
   // Export
   XLSX.writeFile(wb, 'FinEdge-Export-' + today + '.xlsx');
+  } catch(err) {
+    console.error('Excel export error:', err);
+    alert('Export failed: ' + err.message + '\n\nPlease try again or contact support.');
+  }
 };
 
 // BOOT
