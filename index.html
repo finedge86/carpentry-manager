@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Fine Edge — Carpentry Manager</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -429,10 +430,10 @@ tr:hover td{background:var(--bg3)}
     <div style="font-size:16px;font-weight:600;color:var(--green)">Export PDF</div>
     <div style="font-size:11px;color:var(--text2);margin-top:4px">Formatted Income Statement for Kuwait MoCI</div>
   </div>
-  <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--blue);cursor:pointer" onclick="exportPL('excel')">
-    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📊 Excel Report</div>
+  <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--blue);cursor:pointer" onclick="exportFullExcel()">
+    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📊 Full Excel Export</div>
     <div style="font-size:16px;font-weight:600;color:var(--blue)">Export Excel</div>
-    <div style="font-size:11px;color:var(--text2);margin-top:4px">P&amp;L + Balance Sheet in .xlsx format</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">All sections in separate sheets — Clients, Projects, Invoices, Expenses, Cash, Salaries, P&amp;L</div>
   </div>
   <div class="card" style="padding:1rem 1.2rem;border-left:3px solid var(--amber);cursor:pointer" onclick="exportXBRL()">
     <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🏛️ XBRL XML</div>
@@ -1057,6 +1058,192 @@ document.getElementById('ibtn').addEventListener('click',()=>{const inp=document
 // ENTER key on auth
 document.getElementById('auth-pass').addEventListener('keydown', e => { if(e.key==='Enter') doAuth(); });
 document.getElementById('auth-email').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('auth-pass').focus(); });
+
+// ══════════════════════════════════════════════════════
+// FULL EXCEL EXPORT
+// ══════════════════════════════════════════════════════
+window.exportFullExcel = function() {
+  if (typeof XLSX === 'undefined') { alert('Excel library not loaded yet, try again in a moment.'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const kf = n => (+n||0).toFixed(3);
+  const today = new Date().toISOString().split('T')[0];
+
+  // Helper: style header row
+  const makeSheet = (headers, rows) => {
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    // Column widths
+    ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 4, 16) }));
+    return ws;
+  };
+
+  // ── 1. SUMMARY ──
+  const pl = calcPL();
+  const {i: cashIn, o: cashOut, b: cashBal} = cashBal();
+  const TM2 = today.slice(0,7);
+  const mInc = DB.invoices.filter(i=>i.status==='Paid'&&(i.date||'').startsWith(TM2)).reduce((s,i)=>s+i.amount,0);
+  const mExp = DB.expenses.filter(e=>(e.date||'').startsWith(TM2)).reduce((s,e)=>s+e.amount,0)
+    + DB.salaryPayments.filter(p=>(p.month||'').startsWith(TM2)).reduce((s,p)=>s+p.amount,0)
+    + DB.rentPayments.filter(r=>(r.month||'').startsWith(TM2)).reduce((s,r)=>s+r.amount,0)
+    + DB.sharedExpenses.filter(x=>(x.date||'').startsWith(TM2)).reduce((s,x)=>s+x.amount,0);
+
+  const summaryRows = [
+    ['Fine Edge Carpentry Manager — Export', ''],
+    ['Generated', today],
+    ['', ''],
+    ['ALL-TIME FINANCIALS', ''],
+    ['Total Revenue (Invoiced)', kf(pl.revenue)],
+    ['Cash Sales Revenue', kf(pl.cashRevenue)],
+    ['Total Revenue', kf(pl.totalRevenue)],
+    ['', ''],
+    ['Cost of Materials', kf(pl.materials)],
+    ['Labor Costs', kf(pl.labor)],
+    ['Transport', kf(pl.transport)],
+    ['Gross Profit', kf(pl.grossProfit)],
+    ['', ''],
+    ['Employee Salaries', kf(pl.salaries)],
+    ['Rent', kf(pl.rent)],
+    ['Shared Materials', kf(pl.shared)],
+    ['Other Expenses', kf(pl.otherExp)],
+    ['Total Operating Expenses', kf(pl.totalOpex)],
+    ['', ''],
+    ['NET PROFIT / (LOSS)', kf(pl.netProfit)],
+    ['', ''],
+    ['CASH POSITION', ''],
+    ['Total Cash In', kf(cashIn)],
+    ['Total Cash Out', kf(cashOut)],
+    ['Cash Balance', kf(cashBal)],
+    ['Trade Receivables (Pending)', kf(pl.receivables)],
+    ['', ''],
+    ['THIS MONTH ('+TM2+')', ''],
+    ['Month Income', kf(mInc)],
+    ['Month Expenses', kf(mExp)],
+    ['Month Profit', kf(mInc - mExp)],
+    ['', ''],
+    ['COUNTS', ''],
+    ['Total Clients', DB.clients.length],
+    ['Total Projects', DB.projects.length],
+    ['Open Projects', DB.projects.filter(p=>p.status==='Open'||p.status==='In progress').length],
+    ['Total Invoices', DB.invoices.length],
+    ['Total Expenses', DB.expenses.length],
+    ['Employees', DB.employees.length],
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet([['Item','Amount (KWD)'], ...summaryRows]);
+  wsSummary['!cols'] = [{wch:35},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, '📊 Summary');
+
+  // ── 2. CLIENTS ──
+  const clientHeaders = ['Name','Phone','Area','Entry Date','Projects','Total Billed (KWD)','Notes'];
+  const clientRows = DB.clients.map(c => {
+    const projs = DB.projects.filter(p=>p.clientId===c.id).length;
+    const billed = DB.invoices.filter(i=>i.clientId===c.id).reduce((s,i)=>s+i.amount,0);
+    return [c.name, c.phone||'', c.area||'', c.entryDate||'', projs, kf(billed), c.notes||''];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(clientHeaders, clientRows), '👤 Clients');
+
+  // ── 3. PROJECTS ──
+  const projHeaders = ['Project Name','Client','Entry Date','Value (KWD)','Paid (KWD)','Remaining (KWD)','Payment Status','Status','Start Date','Due Date','Notes'];
+  const projRows = DB.projects.map(p => {
+    const cl = DB.clients.find(c=>c.id===p.clientId);
+    const paid = DB.invoices.filter(i=>i.projectId===p.id&&i.status==='Paid').reduce((s,i)=>s+i.amount,0);
+    const rem = Math.max(0,(p.value||0)-paid);
+    const payStatus = !p.value?'No value':paid>=(p.value||0)?'Fully Paid':paid>0?'Partial':'Unpaid';
+    return [p.name, cl?.name||'', p.entryDate||'', kf(p.value||0), kf(paid), kf(rem), payStatus, p.status, p.start||'', p.due||'', p.notes||''];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(projHeaders, projRows), '📋 Projects');
+
+  // ── 4. INVOICES ──
+  const invHeaders = ['Invoice #','Client','Project','Amount (KWD)','Date','Status','Notes'];
+  const sorted = [...DB.invoices].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const invRows = sorted.map((inv,i) => {
+    const cl = DB.clients.find(c=>c.id===inv.clientId);
+    const pr = DB.projects.find(p=>p.id===inv.projectId);
+    return ['#'+String(sorted.length-i).padStart(3,'0'), cl?.name||'', pr?.name||'', kf(inv.amount), inv.date||'', inv.status, inv.notes||''];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(invHeaders, invRows), '🧾 Invoices');
+
+  // ── 5. EXPENSES ──
+  const expHeaders = ['Description','Supplier','Project','Category','Amount (KWD)','Date'];
+  const expRows = [...DB.expenses].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(e => {
+    const pr = DB.projects.find(p=>p.id===e.projectId);
+    return [e.desc, e.supplier||'', pr?.name||'', e.cat, kf(e.amount), e.date||''];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(expHeaders, expRows), '📤 Expenses');
+
+  // ── 6. CASH LEDGER ──
+  const cashHeaders = ['Description','Type','Category','Amount (KWD)','Date','Reference','Flow Type','Notes'];
+  const cashRows = [...DB.cashTransactions].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(t =>
+    [t.desc, t.type==='in'?'Cash In':'Cash Out', t.cat||'', kf(t.amount), t.date||'', t.ref||'', t.flowType||'operating', t.notes||'']
+  );
+  XLSX.utils.book_append_sheet(wb, makeSheet(cashHeaders, cashRows), '💵 Cash Ledger');
+
+  // ── 7. SALARIES ──
+  const salHeaders = ['Employee','Role','Base Salary (KWD)','Amount Paid (KWD)','For Month','Date Paid','Notes'];
+  const salRows = [...DB.salaryPayments].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(s => {
+    const emp = DB.employees.find(e=>e.id===s.empId);
+    return [emp?.name||'', emp?.role||'', kf(emp?.salary||0), kf(s.amount), s.month||'', s.date||'', s.notes||''];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(salHeaders, salRows), '👷 Salaries');
+
+  // ── 8. RENT ──
+  const rentHeaders = ['Description','Amount (KWD)','For Month','Date Paid'];
+  const rentRows = [...DB.rentPayments].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(r =>
+    [r.desc||'Rent', kf(r.amount), r.month||'', r.date||'']
+  );
+  XLSX.utils.book_append_sheet(wb, makeSheet(rentHeaders, rentRows), '🏠 Rent');
+
+  // ── 9. SHARED MATERIALS ──
+  const shHeaders = ['Description','Category','Amount (KWD)','Date','Splits'];
+  const shRows = [...DB.sharedExpenses].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(sh => {
+    const splits = (sh.splits||[]).map(s=>{const pr=DB.projects.find(p=>p.id===s.projectId);return (pr?.name||'?')+': KWD '+kf(s.amount);}).join(' | ');
+    return [sh.desc, sh.cat||'', kf(sh.amount), sh.date||'', splits];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(shHeaders, shRows), '🪵 Shared Materials');
+
+  // ── 10. EMPLOYEES ──
+  const empHeaders = ['Name','Role','Base Salary (KWD/mo)','Phone','Civil ID','Hire Date','Total Paid (KWD)'];
+  const empRows = DB.employees.map(e => {
+    const total = DB.salaryPayments.filter(s=>s.empId===e.id).reduce((s,p)=>s+p.amount,0);
+    return [e.name, e.role||'', kf(e.salary||0), e.phone||'', e.civilId||'', e.hireDate||'', kf(total)];
+  });
+  XLSX.utils.book_append_sheet(wb, makeSheet(empHeaders, empRows), '🧑‍💼 Employees');
+
+  // ── 11. P&L ──
+  const plRows = [
+    ['INCOME STATEMENT — Fine Edge Carpentry', ''],
+    ['Generated', today],
+    ['', ''],
+    ['REVENUE', ''],
+    ['Revenue from Contracts (Invoiced)', kf(pl.revenue)],
+    ['Other Income (Cash Sales)', kf(pl.cashRevenue)],
+    ['TOTAL REVENUE', kf(pl.totalRevenue)],
+    ['', ''],
+    ['COST OF SALES', ''],
+    ['Materials & Supplies', '('+kf(pl.materials)+')'],
+    ['Labor Costs', '('+kf(pl.labor)+')'],
+    ['Transport & Delivery', '('+kf(pl.transport)+')'],
+    ['GROSS PROFIT', kf(pl.grossProfit)],
+    ['', ''],
+    ['OPERATING EXPENSES', ''],
+    ['Employee Salaries & Benefits', '('+kf(pl.salaries)+')'],
+    ['Rent Expense', '('+kf(pl.rent)+')'],
+    ['Shared Materials & Overhead', '('+kf(pl.shared)+')'],
+    ['Other Operating Expenses', '('+kf(pl.otherExp)+')'],
+    ['TOTAL OPERATING EXPENSES', '('+kf(pl.totalOpex)+')'],
+    ['', ''],
+    ['NET PROFIT / (LOSS)', kf(pl.netProfit)],
+    ['', ''],
+    ['SUPPLEMENTARY', ''],
+    ['Trade Receivables (Pending)', kf(pl.receivables)],
+    ['Cash & Cash Equivalents', kf(cashBal)],
+  ];
+  const wspl = XLSX.utils.aoa_to_sheet([['Description','Amount (KWD)'], ...plRows]);
+  wspl['!cols'] = [{wch:40},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wspl, '📄 P&L');
+
+  // Export
+  XLSX.writeFile(wb, 'FinEdge-Export-' + today + '.xlsx');
+};
 
 // BOOT
 checkExistingSession();
