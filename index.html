@@ -1049,7 +1049,242 @@ window.calcPL=function(){const invPaid=DB.invoices.filter(i=>i.status==='Paid'&&
 window.saveEntityInfo=function(){DB.entityInfo={nameEn:document.getElementById('rpt-name-en')?.value||'Fine Edge Carpentry',nameAr:document.getElementById('rpt-name-ar')?.value||'',civilId:document.getElementById('rpt-civilid')?.value||'',entityType:document.getElementById('rpt-entity-type')?.value||'sole',fyStart:document.getElementById('rpt-fy-start')?.value||'',fyEnd:document.getElementById('rpt-fy-end')?.value||'',activity:document.getElementById('rpt-activity')?.value||'',auditor:document.getElementById('rpt-auditor')?.value||''};save();alert('Entity info saved ✅');};
 window.rReports=function(){const ei=DB.entityInfo||{};const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};sv('rpt-name-en',ei.nameEn||'Fine Edge Carpentry');sv('rpt-name-ar',ei.nameAr||'');sv('rpt-civilid',ei.civilId||'');sv('rpt-entity-type',ei.entityType||'sole');sv('rpt-fy-start',ei.fyStart||new Date().getFullYear()+'-01-01');sv('rpt-fy-end',ei.fyEnd||new Date().getFullYear()+'-12-31');sv('rpt-activity',ei.activity||'Carpentry & Furniture Manufacturing');sv('rpt-auditor',ei.auditor||'');const pl=calcPL();const fmt=v=>'KWD '+v.toFixed(3);const periodLabel=ei.fyStart&&ei.fyEnd?ei.fyStart+' to '+ei.fyEnd:'Current Period';const lbl=document.getElementById('rpt-period-label');if(lbl)lbl.textContent='— '+periodLabel;const rows=[{label:'Revenue from Contracts',value:pl.revenue,bold:false,indent:1},{label:'Other Income (Cash Sales)',value:pl.cashRevenue,bold:false,indent:1},{label:'TOTAL REVENUE',value:pl.totalRevenue,bold:true,indent:0,border:true},{label:'',value:null},{label:'Cost of Materials',value:-pl.materials,bold:false,indent:1},{label:'Labor Costs',value:-pl.labor,bold:false,indent:1},{label:'Transport & Delivery',value:-pl.transport,bold:false,indent:1},{label:'GROSS PROFIT',value:pl.grossProfit,bold:true,indent:0,border:true},{label:'',value:null},{label:'Employee Salaries',value:-pl.salaries,bold:false,indent:1},{label:'Rent Expense',value:-pl.rent,bold:false,indent:1},{label:'Shared Materials',value:-pl.shared,bold:false,indent:1},{label:'Other Expenses',value:-pl.otherExp,bold:false,indent:1},{label:'NET PROFIT / (LOSS)',value:pl.netProfit,bold:true,indent:0,border:true,highlight:true},{label:'',value:null},{label:'Receivables (Pending)',value:pl.receivables,bold:false,indent:1},{label:'Cash Balance',value:pl.cash,bold:false,indent:1}];let html='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--bg2)"><th style="text-align:left;padding:6px 8px;color:var(--text2);font-size:11px;text-transform:uppercase">Description</th><th style="text-align:right;padding:6px 8px;color:var(--text2);font-size:11px;text-transform:uppercase">Amount (KWD)</th></tr></thead><tbody>';rows.forEach(r=>{if(!r.label){html+='<tr><td colspan="2" style="padding:4px"></td></tr>';return;}const bg2=r.highlight?(r.value>=0?'background:var(--bg3)':'background:#fff0f0'):'';const fw=r.bold?'font-weight:600':'';const pl2=r.indent?'padding-left:'+(r.indent*20)+'px':'';const bt=r.border?'border-top:2px solid var(--border2)':'';const col=r.value!==null&&r.value<0?'color:var(--red)':(r.highlight&&r.value>=0?'color:var(--green)':'');html+='<tr style="'+bg2+bt+'"><td style="padding:5px 8px;'+fw+';'+pl2+'">'+r.label+'</td><td style="padding:5px 8px;text-align:right;'+fw+';'+col+'">'+(r.value!==null?fmt(r.value):'')+'</td></tr>';});html+='</tbody></table>';const tbl=document.getElementById('rpt-pl-table');if(tbl)tbl.innerHTML=html;};
 window.exportPL=function(fmt){const pl=calcPL();const ei=DB.entityInfo||{};const nameEn=ei.nameEn||'Fine Edge Carpentry';const fyStart=ei.fyStart||'2026-01-01';const fyEnd=ei.fyEnd||'2026-12-31';const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});if(fmt==='excel'){const rows=[['Fine Edge — P&L',''],['Period: '+fyStart+' to '+fyEnd,''],['Description','Amount (KWD)'],['Revenue',pl.revenue.toFixed(3)],['Cash Revenue',pl.cashRevenue.toFixed(3)],['TOTAL REVENUE',pl.totalRevenue.toFixed(3)],['Materials',(-pl.materials).toFixed(3)],['Labor',(-pl.labor).toFixed(3)],['Transport',(-pl.transport).toFixed(3)],['Gross Profit',pl.grossProfit.toFixed(3)],['Salaries',(-pl.salaries).toFixed(3)],['Rent',(-pl.rent).toFixed(3)],['Shared',(-pl.shared).toFixed(3)],['Other',(-pl.otherExp).toFixed(3)],['NET PROFIT',pl.netProfit.toFixed(3)],['Cash',pl.cash.toFixed(3)],['Receivables',pl.receivables.toFixed(3)]];const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameEn.replace(/\s+/g,'_')+'_PL.csv';a.click();return;}const w=window.open('','_blank','width=800,height=900');w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px}.header{text-align:center;border-bottom:3px double #1a1915;padding-bottom:12px;margin-bottom:16px}.co-name{font-size:20px;font-weight:700}.title{font-size:15px;font-weight:700;text-align:center;margin:12px 0;text-transform:uppercase;color:#0F6E56}table{width:100%;border-collapse:collapse}.total-row td{border-top:2px solid #1a1915;font-weight:700}.net-row td{border-top:3px double #1a1915;border-bottom:3px double #1a1915;font-weight:700;font-size:13px;color:#0F6E56}td{padding:5px 8px}.indent{padding-left:24px!important}.right{text-align:right}.red{color:#D85A30}</style></head><body><div class="header"><div class="co-name">${nameEn}</div><div style="font-size:11px;color:#666">Period: ${fyStart} to ${fyEnd} | Prepared: ${today}</div></div><div class="title">Income Statement (P&L)</div><table><tr><td>Revenue</td><td class="right">${pl.revenue.toFixed(3)}</td></tr><tr><td>Cash Revenue</td><td class="right">${pl.cashRevenue.toFixed(3)}</td></tr><tr class="total-row"><td><b>Total Revenue</b></td><td class="right"><b>${pl.totalRevenue.toFixed(3)}</b></td></tr><tr><td class="indent red">Materials</td><td class="right red">(${pl.materials.toFixed(3)})</td></tr><tr><td class="indent red">Labor</td><td class="right red">(${pl.labor.toFixed(3)})</td></tr><tr class="total-row"><td><b>Gross Profit</b></td><td class="right"><b>${pl.grossProfit.toFixed(3)}</b></td></tr><tr><td class="indent red">Salaries</td><td class="right red">(${pl.salaries.toFixed(3)})</td></tr><tr><td class="indent red">Rent</td><td class="right red">(${pl.rent.toFixed(3)})</td></tr><tr><td class="indent red">Other</td><td class="right red">(${(pl.shared+pl.otherExp).toFixed(3)})</td></tr><tr class="net-row"><td><b>Net Profit / (Loss)</b></td><td class="right"><b>${pl.netProfit.toFixed(3)}</b></td></tr></table></body></html>`);w.document.close();setTimeout(()=>w.print(),500);};
-window.exportXBRL=function(){const pl=calcPL();const ei=DB.entityInfo||{};const nameEn=ei.nameEn||'Fine Edge Carpentry';const cid=ei.civilId||'ENTER-CIVIL-ID';const fys=ei.fyStart||(new Date().getFullYear()+'-01-01');const fye=ei.fyEnd||(new Date().getFullYear()+'-12-31');const today=new Date().toISOString().split('T')[0];const d='3';let x='<?xml version="1.0" encoding="UTF-8"?>\n<xbrl xmlns="http://www.xbrl.org/2003/instance" xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:iso4217="http://www.xbrl.org/2003/iso4217" xmlns:ifrs-sme="http://xbrl.ifrs.org/taxonomy/2014-03-05/ifrs-sme" xmlns:dei="http://xbrl.sec.gov/dei/2021">\n';x+='<xbrli:context id="CurrentPeriod"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+cid+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>'+fys+'</xbrli:startDate><xbrli:endDate>'+fye+'</xbrli:endDate></xbrli:period></xbrli:context>\n';x+='<xbrli:context id="PeriodEnd"><xbrli:entity><xbrli:identifier scheme="http://www.moci.gov.kw">'+cid+'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>'+fye+'</xbrli:instant></xbrli:period></xbrli:context>\n';x+='<xbrli:unit id="KWD"><xbrli:measure>iso4217:KWD</xbrli:measure></xbrli:unit>\n';x+='<dei:EntityRegistrantName contextRef="CurrentPeriod">'+nameEn+'</dei:EntityRegistrantName>\n';x+='<ifrs-sme:Revenue contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.revenue.toFixed(3)+'</ifrs-sme:Revenue>\n';x+='<ifrs-sme:GrossProfit contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.grossProfit.toFixed(3)+'</ifrs-sme:GrossProfit>\n';x+='<ifrs-sme:ProfitLoss contextRef="CurrentPeriod" unitRef="KWD" decimals="'+d+'">'+pl.netProfit.toFixed(3)+'</ifrs-sme:ProfitLoss>\n';x+='<ifrs-sme:CashAndCashEquivalents contextRef="PeriodEnd" unitRef="KWD" decimals="'+d+'">'+pl.cash.toFixed(3)+'</ifrs-sme:CashAndCashEquivalents>\n';x+='</xbrl>';const blob=new Blob([x],{type:'application/xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameEn.replace(/\s+/g,'_')+'_XBRL_'+fye+'.xml';a.click();};
+window.exportXBRL=function(){
+  const pl=calcPL();
+  const cf=window.calcCashFlow?calcCashFlow():{operatingNet:0,investingNet:0,financingNet:0,netChange:0};
+  const ei=DB.entityInfo||{};
+  const eq=DB.equityInfo||{};
+  const nameEn=ei.nameEn||'Fine Edge Carpentry';
+  const nameAr=ei.nameAr||'فاين إيدج للنجارة';
+  const cid=ei.civilId||'ENTER-CIVIL-ID';
+  const fys=ei.fyStart||(new Date().getFullYear()+'-01-01');
+  const fye=ei.fyEnd||(new Date().getFullYear()+'-12-31');
+  const prevFys=(parseInt(fys.slice(0,4))-1)+fys.slice(4);
+  const prevFye=(parseInt(fye.slice(0,4))-1)+fye.slice(4);
+  const today=new Date().toISOString().split('T')[0];
+  const entityType=ei.entityType||'sole';
+  const entityTypeLabel={'sole':'Sole Proprietorship','wll':'With Limited Liability - WLL','ksc':'Kuwaiti Shareholding Company - Closed','partnership':'Partnership'}[entityType]||'Sole Proprietorship';
+  const d='3';
+
+  // Assets & Liabilities from Balance Sheet
+  const assets=DB.assets||[];
+  const liabilities=DB.liabilities||[];
+  const fa=assets.filter(a=>a.cat==='fixed');
+  const ca=assets.filter(a=>a.cat==='current');
+  const ll=liabilities.filter(l=>l.cat==='longterm');
+  const sl=liabilities.filter(l=>l.cat==='shortterm');
+  const ppe=fa.reduce((s,a)=>s+a.value,0);
+  const ppeDepn=fa.reduce((s,a)=>s+(a.depreciation||0),0);
+  const ppeNet=ppe-ppeDepn;
+  const otherCurrentAssets=ca.reduce((s,a)=>s+a.value,0);
+  const tradeReceivables=pl.receivables;
+  const cash=pl.cash;
+  const totalCurrentAssets=cash+tradeReceivables+otherCurrentAssets;
+  const totalAssets=ppeNet+totalCurrentAssets;
+  const longTermLiab=ll.reduce((s,l)=>s+l.value,0);
+  const shortTermLiab=sl.reduce((s,l)=>s+l.value,0);
+  const totalLiabilities=longTermLiab+shortTermLiab;
+  const capital=eq.capital||0;
+  const drawings=eq.drawings||0;
+  const priorRetained=eq.retained||0;
+  const totalEquity=capital+priorRetained+pl.netProfit-drawings;
+  const employees=DB.employees||[];
+
+  // Prior year values (stored if available, else 0)
+  const priorRevenue=eq.priorRevenue||0;
+
+  let x='';
+  x+=`<?xml version="1.0" encoding="UTF-8"?>\n`;
+  x+=`<!--\n`;
+  x+=`  Kuwait Ministry of Commerce & Industry — Qayd XBRL Filing\n`;
+  x+=`  Entity: ${nameEn} / ${nameAr}\n`;
+  x+=`  Civil/Commercial Reg: ${cid}\n`;
+  x+=`  Entity Type: ${entityTypeLabel}\n`;
+  x+=`  Fiscal Period: ${fys} to ${fye}\n`;
+  x+=`  Taxonomy: IFRS Full (2023) — http://xbrl.ifrs.org/taxonomy/2023-03-23/ifrs-full\n`;
+  x+=`  Standard: IAS 1, IFRS 15, IAS 7, IAS 19, IAS 16\n`;
+  x+=`  Generated: ${today}\n`;
+  x+=`  Platform: Kuwait Business Center (Qayd)\n`;
+  x+=`  NOTE: Review all values with your certified auditor before submitting.\n`;
+  x+=`        Electronic filing is OPTIONAL in 2026, MANDATORY from 1 January 2027.\n`;
+  x+=`-->\n`;
+
+  x+=`<xbrl\n`;
+  x+=`  xmlns="http://www.xbrl.org/2003/instance"\n`;
+  x+=`  xmlns:xbrli="http://www.xbrl.org/2003/instance"\n`;
+  x+=`  xmlns:link="http://www.xbrl.org/2003/linkbase"\n`;
+  x+=`  xmlns:xlink="http://www.w3.org/1999/xlink"\n`;
+  x+=`  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n`;
+  x+=`  xmlns:iso4217="http://www.xbrl.org/2003/iso4217"\n`;
+  x+=`  xmlns:ifrs-full="http://xbrl.ifrs.org/taxonomy/2023-03-23/ifrs-full"\n`;
+  x+=`  xmlns:kw-entry="http://www.moci.gov.kw/taxonomy/2024/kw-entry"\n`;
+  x+=`  xsi:schemaLocation="http://xbrl.ifrs.org/taxonomy/2023-03-23/ifrs-full http://xbrl.ifrs.org/taxonomy/2023-03-23/ifrs-full/full_ifrs_entry_point_2023-03-23.xsd">\n\n`;
+
+  // Schema reference
+  x+=`  <link:schemaRef xlink:type="simple"\n`;
+  x+=`    xlink:href="http://xbrl.ifrs.org/taxonomy/2023-03-23/ifrs-full/full_ifrs_entry_point_2023-03-23.xsd"/>\n\n`;
+
+  // ── CONTEXTS ──
+  x+=`  <!-- ═══════ REPORTING CONTEXTS ═══════ -->\n`;
+  // Current period (duration)
+  x+=`  <xbrli:context id="CurrentPeriod">\n`;
+  x+=`    <xbrli:entity>\n`;
+  x+=`      <xbrli:identifier scheme="http://www.moci.gov.kw">${cid}</xbrli:identifier>\n`;
+  x+=`    </xbrli:entity>\n`;
+  x+=`    <xbrli:period>\n`;
+  x+=`      <xbrli:startDate>${fys}</xbrli:startDate>\n`;
+  x+=`      <xbrli:endDate>${fye}</xbrli:endDate>\n`;
+  x+=`    </xbrli:period>\n`;
+  x+=`  </xbrli:context>\n\n`;
+  // Period end (instant)
+  x+=`  <xbrli:context id="PeriodEnd">\n`;
+  x+=`    <xbrli:entity>\n`;
+  x+=`      <xbrli:identifier scheme="http://www.moci.gov.kw">${cid}</xbrli:identifier>\n`;
+  x+=`    </xbrli:entity>\n`;
+  x+=`    <xbrli:period>\n`;
+  x+=`      <xbrli:instant>${fye}</xbrli:instant>\n`;
+  x+=`    </xbrli:period>\n`;
+  x+=`  </xbrli:context>\n\n`;
+  // Period start (instant) - for comparative
+  x+=`  <xbrli:context id="PeriodStart">\n`;
+  x+=`    <xbrli:entity>\n`;
+  x+=`      <xbrli:identifier scheme="http://www.moci.gov.kw">${cid}</xbrli:identifier>\n`;
+  x+=`    </xbrli:entity>\n`;
+  x+=`    <xbrli:period>\n`;
+  x+=`      <xbrli:instant>${fys}</xbrli:instant>\n`;
+  x+=`    </xbrli:period>\n`;
+  x+=`  </xbrli:context>\n\n`;
+  // Prior year period (comparative - required by IAS 1)
+  x+=`  <xbrli:context id="PriorPeriod">\n`;
+  x+=`    <xbrli:entity>\n`;
+  x+=`      <xbrli:identifier scheme="http://www.moci.gov.kw">${cid}</xbrli:identifier>\n`;
+  x+=`    </xbrli:entity>\n`;
+  x+=`    <xbrli:period>\n`;
+  x+=`      <xbrli:startDate>${prevFys}</xbrli:startDate>\n`;
+  x+=`      <xbrli:endDate>${prevFye}</xbrli:endDate>\n`;
+  x+=`    </xbrli:period>\n`;
+  x+=`  </xbrli:context>\n\n`;
+  // Prior year end
+  x+=`  <xbrli:context id="PriorPeriodEnd">\n`;
+  x+=`    <xbrli:entity>\n`;
+  x+=`      <xbrli:identifier scheme="http://www.moci.gov.kw">${cid}</xbrli:identifier>\n`;
+  x+=`    </xbrli:entity>\n`;
+  x+=`    <xbrli:period>\n`;
+  x+=`      <xbrli:instant>${prevFye}</xbrli:instant>\n`;
+  x+=`    </xbrli:period>\n`;
+  x+=`  </xbrli:context>\n\n`;
+
+  // ── UNIT ──
+  x+=`  <!-- ═══════ UNITS ═══════ -->\n`;
+  x+=`  <xbrli:unit id="KWD"><xbrli:measure>iso4217:KWD</xbrli:measure></xbrli:unit>\n`;
+  x+=`  <xbrli:unit id="pure"><xbrli:measure>xbrli:pure</xbrli:measure></xbrli:unit>\n`;
+  x+=`  <xbrli:unit id="shares"><xbrli:measure>xbrli:shares</xbrli:measure></xbrli:unit>\n\n`;
+
+  // ── ENTITY INFORMATION (IAS 1) ──
+  x+=`  <!-- ═══════ ENTITY INFORMATION (IAS 1.138) ═══════ -->\n`;
+  x+=`  <ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification contextRef="CurrentPeriod">${nameEn}</ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification>\n`;
+  x+=`  <ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification contextRef="CurrentPeriod" xml:lang="ar">${nameAr}</ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification>\n`;
+  x+=`  <ifrs-full:DomicileOfEntity contextRef="CurrentPeriod">Kuwait — دولة الكويت</ifrs-full:DomicileOfEntity>\n`;
+  x+=`  <ifrs-full:LegalFormOfEntity contextRef="CurrentPeriod">${entityTypeLabel}</ifrs-full:LegalFormOfEntity>\n`;
+  x+=`  <ifrs-full:CountryOfIncorporation contextRef="CurrentPeriod">KW</ifrs-full:CountryOfIncorporation>\n`;
+  x+=`  <ifrs-full:PrincipalPlaceOfBusiness contextRef="CurrentPeriod">Kuwait</ifrs-full:PrincipalPlaceOfBusiness>\n`;
+  x+=`  <ifrs-full:DescriptionOfNatureOfEntitysOperationsAndPrincipalActivities contextRef="CurrentPeriod">${ei.activity||'Carpentry and Custom Furniture Manufacturing'}</ifrs-full:DescriptionOfNatureOfEntitysOperationsAndPrincipalActivities>\n`;
+  x+=`  <ifrs-full:PeriodCoveredByFinancialStatements contextRef="CurrentPeriod">${fys} to ${fye}</ifrs-full:PeriodCoveredByFinancialStatements>\n`;
+  x+=`  <ifrs-full:DateOfEndOfReportingPeriod2013 contextRef="PeriodEnd">${fye}</ifrs-full:DateOfEndOfReportingPeriod2013>\n\n`;
+
+  // ── STATEMENT OF FINANCIAL POSITION (IAS 1 / Balance Sheet) ──
+  x+=`  <!-- ═══════ STATEMENT OF FINANCIAL POSITION (IAS 1) ═══════ -->\n`;
+  // Non-current assets
+  x+=`  <ifrs-full:PropertyPlantAndEquipment contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${ppeNet.toFixed(3)}</ifrs-full:PropertyPlantAndEquipment>\n`;
+  x+=`  <ifrs-full:PropertyPlantAndEquipment contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:PropertyPlantAndEquipment>\n`;
+  x+=`  <ifrs-full:NoncurrentAssets contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${ppeNet.toFixed(3)}</ifrs-full:NoncurrentAssets>\n\n`;
+  // Current assets
+  x+=`  <ifrs-full:CashAndCashEquivalents contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${cash.toFixed(3)}</ifrs-full:CashAndCashEquivalents>\n`;
+  x+=`  <ifrs-full:CashAndCashEquivalents contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:CashAndCashEquivalents>\n`;
+  x+=`  <ifrs-full:TradeAndOtherCurrentReceivables contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${tradeReceivables.toFixed(3)}</ifrs-full:TradeAndOtherCurrentReceivables>\n`;
+  x+=`  <ifrs-full:TradeAndOtherCurrentReceivables contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:TradeAndOtherCurrentReceivables>\n`;
+  if(otherCurrentAssets>0){
+    x+=`  <ifrs-full:OtherCurrentAssets contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${otherCurrentAssets.toFixed(3)}</ifrs-full:OtherCurrentAssets>\n`;
+  }
+  x+=`  <ifrs-full:CurrentAssets contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${totalCurrentAssets.toFixed(3)}</ifrs-full:CurrentAssets>\n`;
+  x+=`  <ifrs-full:CurrentAssets contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:CurrentAssets>\n`;
+  x+=`  <ifrs-full:Assets contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${totalAssets.toFixed(3)}</ifrs-full:Assets>\n`;
+  x+=`  <ifrs-full:Assets contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:Assets>\n\n`;
+  // Liabilities
+  if(longTermLiab>0){
+    x+=`  <ifrs-full:NoncurrentLiabilities contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${longTermLiab.toFixed(3)}</ifrs-full:NoncurrentLiabilities>\n`;
+    x+=`  <ifrs-full:NoncurrentLiabilities contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:NoncurrentLiabilities>\n`;
+  }
+  if(shortTermLiab>0){
+    x+=`  <ifrs-full:CurrentLiabilities contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${shortTermLiab.toFixed(3)}</ifrs-full:CurrentLiabilities>\n`;
+    x+=`  <ifrs-full:CurrentLiabilities contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:CurrentLiabilities>\n`;
+  }
+  x+=`  <ifrs-full:Liabilities contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${totalLiabilities.toFixed(3)}</ifrs-full:Liabilities>\n`;
+  x+=`  <ifrs-full:Liabilities contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:Liabilities>\n\n`;
+  // Equity (IAS 1 / IFRS for owner's equity)
+  x+=`  <ifrs-full:IssuedCapital contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${capital.toFixed(3)}</ifrs-full:IssuedCapital>\n`;
+  x+=`  <ifrs-full:RetainedEarnings contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${(priorRetained+pl.netProfit).toFixed(3)}</ifrs-full:RetainedEarnings>\n`;
+  x+=`  <ifrs-full:RetainedEarnings contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">${priorRetained.toFixed(3)}</ifrs-full:RetainedEarnings>\n`;
+  if(drawings>0){
+    x+=`  <ifrs-full:DividendsRecognisedAsDistributionsToOwnersOfParent contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${drawings.toFixed(3)}</ifrs-full:DividendsRecognisedAsDistributionsToOwnersOfParent>\n`;
+  }
+  x+=`  <ifrs-full:Equity contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${totalEquity.toFixed(3)}</ifrs-full:Equity>\n`;
+  x+=`  <ifrs-full:Equity contextRef="PriorPeriodEnd" unitRef="KWD" decimals="${d}">0.000</ifrs-full:Equity>\n`;
+  x+=`  <ifrs-full:EquityAndLiabilities contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${(totalEquity+totalLiabilities).toFixed(3)}</ifrs-full:EquityAndLiabilities>\n\n`;
+
+  // ── STATEMENT OF PROFIT OR LOSS (IFRS 15 / IAS 1) ──
+  x+=`  <!-- ═══════ STATEMENT OF PROFIT OR LOSS (IAS 1 / IFRS 15) ═══════ -->\n`;
+  x+=`  <ifrs-full:Revenue contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.revenue.toFixed(3)}</ifrs-full:Revenue>\n`;
+  x+=`  <ifrs-full:Revenue contextRef="PriorPeriod" unitRef="KWD" decimals="${d}">${priorRevenue.toFixed(3)}</ifrs-full:Revenue>\n`;
+  if(pl.cashRevenue>0){
+    x+=`  <ifrs-full:OtherIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.cashRevenue.toFixed(3)}</ifrs-full:OtherIncome>\n`;
+  }
+  x+=`  <ifrs-full:CostOfSales contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.costOfSales.toFixed(3)}</ifrs-full:CostOfSales>\n`;
+  x+=`  <ifrs-full:GrossProfit contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.grossProfit.toFixed(3)}</ifrs-full:GrossProfit>\n`;
+  x+=`  <ifrs-full:GrossProfit contextRef="PriorPeriod" unitRef="KWD" decimals="${d}">0.000</ifrs-full:GrossProfit>\n`;
+  // Operating expenses
+  x+=`  <ifrs-full:EmployeeBenefitsExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.salaries.toFixed(3)}</ifrs-full:EmployeeBenefitsExpense>\n`;
+  x+=`  <ifrs-full:DepreciationAndAmortisationExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${ppeDepn.toFixed(3)}</ifrs-full:DepreciationAndAmortisationExpense>\n`;
+  x+=`  <ifrs-full:RentExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.rent.toFixed(3)}</ifrs-full:RentExpense>\n`;
+  x+=`  <ifrs-full:OtherExpenseByNature contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${(pl.shared+pl.otherExp).toFixed(3)}</ifrs-full:OtherExpenseByNature>\n`;
+  x+=`  <ifrs-full:OperatingExpense contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.totalOpex.toFixed(3)}</ifrs-full:OperatingExpense>\n`;
+  x+=`  <ifrs-full:ProfitLossFromOperatingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.netProfit.toFixed(3)}</ifrs-full:ProfitLossFromOperatingActivities>\n`;
+  x+=`  <ifrs-full:ProfitLossBeforeTax contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.netProfit.toFixed(3)}</ifrs-full:ProfitLossBeforeTax>\n`;
+  x+=`  <ifrs-full:IncomeTaxExpenseContinuingOperations contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">0.000</ifrs-full:IncomeTaxExpenseContinuingOperations>\n`;
+  x+=`  <ifrs-full:ProfitLoss contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.netProfit.toFixed(3)}</ifrs-full:ProfitLoss>\n`;
+  x+=`  <ifrs-full:ProfitLoss contextRef="PriorPeriod" unitRef="KWD" decimals="${d}">0.000</ifrs-full:ProfitLoss>\n`;
+  x+=`  <ifrs-full:OtherComprehensiveIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">0.000</ifrs-full:OtherComprehensiveIncome>\n`;
+  x+=`  <ifrs-full:ComprehensiveIncome contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${pl.netProfit.toFixed(3)}</ifrs-full:ComprehensiveIncome>\n\n`;
+
+  // ── STATEMENT OF CASH FLOWS (IAS 7) ──
+  x+=`  <!-- ═══════ STATEMENT OF CASH FLOWS (IAS 7) ═══════ -->\n`;
+  x+=`  <ifrs-full:CashFlowsFromUsedInOperatingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${cf.operatingNet.toFixed(3)}</ifrs-full:CashFlowsFromUsedInOperatingActivities>\n`;
+  x+=`  <ifrs-full:CashFlowsFromUsedInInvestingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${cf.investingNet.toFixed(3)}</ifrs-full:CashFlowsFromUsedInInvestingActivities>\n`;
+  x+=`  <ifrs-full:CashFlowsFromUsedInFinancingActivities contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${cf.financingNet.toFixed(3)}</ifrs-full:CashFlowsFromUsedInFinancingActivities>\n`;
+  x+=`  <ifrs-full:IncreaseDecreaseInCashAndCashEquivalents contextRef="CurrentPeriod" unitRef="KWD" decimals="${d}">${cf.netChange.toFixed(3)}</ifrs-full:IncreaseDecreaseInCashAndCashEquivalents>\n`;
+  x+=`  <ifrs-full:CashAndCashEquivalentsIfDifferentFromBalanceSheet contextRef="PeriodStart" unitRef="KWD" decimals="${d}">0.000</ifrs-full:CashAndCashEquivalentsIfDifferentFromBalanceSheet>\n`;
+  x+=`  <ifrs-full:CashAndCashEquivalentsAtEndOfPeriodIfDifferentFromBalanceSheet contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${cash.toFixed(3)}</ifrs-full:CashAndCashEquivalentsAtEndOfPeriodIfDifferentFromBalanceSheet>\n\n`;
+
+  // ── WORKFORCE (IAS 19) ──
+  x+=`  <!-- ═══════ WORKFORCE DISCLOSURE (IAS 19) ═══════ -->\n`;
+  x+=`  <ifrs-full:NumberOfEmployees contextRef="PeriodEnd" decimals="0">${employees.length}</ifrs-full:NumberOfEmployees>\n\n`;
+
+  // ── PROPERTY PLANT & EQUIPMENT (IAS 16) ──
+  if(ppe>0){
+    x+=`  <!-- ═══════ PROPERTY PLANT & EQUIPMENT (IAS 16) ═══════ -->\n`;
+    x+=`  <ifrs-full:GrossCarryingAmountMemberMember contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${ppe.toFixed(3)}</ifrs-full:GrossCarryingAmountMemberMember>\n`;
+    x+=`  <ifrs-full:AccumulatedDepreciationAmortisationAndImpairmentMember contextRef="PeriodEnd" unitRef="KWD" decimals="${d}">${ppeDepn.toFixed(3)}</ifrs-full:AccumulatedDepreciationAmortisationAndImpairmentMember>\n\n`;
+  }
+
+  x+=`</xbrl>`;
+
+  const blob=new Blob([x],{type:'application/xml;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=nameEn.replace(/\s+/g,'_')+'_XBRL_IFRS_'+fye+'.xml';
+  a.click();
+  alert('XBRL XML downloaded!\n\nKey details:\n• Taxonomy: IFRS Full 2023 (ifrs-full)\n• Includes: Balance Sheet, P&L, Cash Flows, Equity\n• Comparative: Prior year contexts included\n• Filing: Optional in 2026, MANDATORY from 1 Jan 2027\n\nNext steps:\n1. Have your auditor review the values\n2. Upload to Kuwait Business Center (Qayd platform)\n3. URL: https://www.e.gov.kw/sites/kgoenglish/Pages/BusinessCenter.aspx');
+}
 
 // EXPORT/IMPORT (backup)
 document.getElementById('ebtn').addEventListener('click',()=>{const raw=JSON.stringify(DB);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));a.download='fineedge-backup-'+T+'.json';a.click()});
