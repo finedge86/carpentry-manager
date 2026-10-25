@@ -8,6 +8,9 @@ on:
 jobs:
   send-daily-report:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,3 +27,6 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           TO_EMAIL: buskandar442@hotmail.com
         run: node .github/scripts/daily-export.js
+
+      - name: Keep workflow alive
+        uses: liskin/gh-workflow-keepalive@v1
