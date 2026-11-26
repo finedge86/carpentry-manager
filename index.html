@@ -4,8 +4,262 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Fine Edge — Carpentry Manager</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#1a1a1f"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Fine Edge"/>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════
+   OFFLINE + DATA SAFETY LAYER (OFF)
+   - keeps an on-device copy of all data after every change
+   - never saves to the cloud until the cloud data was loaded (or a device copy exists)
+   - when back online, merges device + cloud by record id (nothing is dropped)
+   - keeps the last 3 pre-merge snapshots on the device
+   ══════════════════════════════════════════════════════ */
+var OFF = (function () {
+  'use strict';
+  var P = { cache: 'fe_cache_', base: 'fe_base_', dirty: 'fe_dirty_', snaps: 'fe_snaps_' };
+  var STD = ['clients','projects','invoices','expenses','employees','rentPayments','salaryPayments','sharedExpenses','cashTransactions','assets','liabilities'];
+  var H = null;
+  var state = { cloudReady: false, blocked: false };
+  var syncing = false, again = false;
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function parse(s) { try { return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+
+  // stable stringify (Postgres jsonb re-orders object keys, so compare in canonical form)
+  function canon(v) {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+    if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+    return '{' + Object.keys(v).sort().filter(function (k) { return v[k] !== undefined && typeof v[k] !== 'function'; }).map(function (k) { return JSON.stringify(k) + ':' + canon(v[k]); }).join(',') + '}';
+  }
+  function same(a, b) { return canon(a) === canon(b); }
+
+  function normalize(d) {
+    d = d && typeof d === 'object' ? d : {};
+    STD.forEach(function (k) { if (!Array.isArray(d[k])) d[k] = []; });
+    return d;
+  }
+  function count(d) {
+    var n = 0; if (!d) return 0;
+    STD.forEach(function (k) { if (Array.isArray(d[k])) n += d[k].length; });
+    return n;
+  }
+
+  // ---------- 3-way merge by record id ----------
+  function indexArr(arr) {
+    var map = {}, seen = {}, order = [];
+    (arr || []).forEach(function (x) {
+      var k = (x && x.id !== undefined && x.id !== null) ? 'id:' + x.id : 'j:' + canon(x);
+      seen[k] = (seen[k] || 0) + 1;
+      if (seen[k] > 1) k = k + '#' + seen[k];
+      map[k] = x; order.push(k);
+    });
+    return { map: map, order: order };
+  }
+  function mergeArr(b, l, c, name, conflicts) {
+    var B = indexArr(b), L = indexArr(l), C = indexArr(c), out = [], used = {};
+    C.order.forEach(function (k) {
+      used[k] = 1;
+      var cx = C.map[k], bx = B.map[k], lx = L.map[k];
+      if (lx === undefined) {
+        if (bx === undefined) out.push(cx);                 // new from cloud
+        else if (same(bx, cx)) { /* deleted on this device, untouched in cloud -> stays deleted */ }
+        else { out.push(cx); conflicts.push({ list: name, key: k, kind: 'edited-elsewhere-deleted-here' }); } // keep it
+      } else if (bx === undefined) {                        // same record created on both sides
+        if (same(lx, cx)) out.push(cx);
+        else { out.push(lx); conflicts.push({ list: name, key: k, kind: 'both-added', cloud: cx }); }
+      } else {
+        var lch = !same(bx, lx), cch = !same(bx, cx);
+        if (lch && cch && !same(lx, cx)) { out.push(lx); conflicts.push({ list: name, key: k, kind: 'both-edited', cloud: cx }); }
+        else if (lch) out.push(lx); else out.push(cx);
+      }
+    });
+    L.order.forEach(function (k) {
+      if (used[k]) return;
+      var lx = L.map[k], bx = B.map[k];
+      if (bx === undefined) out.push(lx);                   // added on this device
+      else if (same(bx, lx)) { /* deleted in cloud, untouched here -> stays deleted */ }
+      else { out.push(lx); conflicts.push({ list: name, key: k, kind: 'edited-here-deleted-elsewhere' }); } // keep it
+    });
+    return out;
+  }
+  function merge(base, local, cloud) {
+    base = base || {}; local = local || {}; cloud = cloud || {};
+    var keys = {}, out = {}, conflicts = [];
+    [base, local, cloud].forEach(function (o) { Object.keys(o).forEach(function (k) { keys[k] = 1; }); });
+    Object.keys(keys).forEach(function (k) {
+      var bv = base[k], lv = local[k], cv = cloud[k];
+      if (Array.isArray(bv) || Array.isArray(lv) || Array.isArray(cv)) { out[k] = mergeArr(bv, lv, cv, k, conflicts); return; }
+      var lch = !same(bv, lv), cch = !same(bv, cv), v;
+      if (lch && cch && !same(lv, cv)) { v = lv; conflicts.push({ list: k, key: k, kind: 'both-edited', cloud: cv }); }
+      else if (lch) v = lv; else v = cv;
+      if (v !== undefined) out[k] = v;
+    });
+    return { merged: out, conflicts: conflicts };
+  }
+
+  function snapshot(uid, reason, local, cloud, conflicts) {
+    var arr = parse(lsGet(P.snaps + uid)) || [];
+    arr.push({ t: new Date().toISOString(), reason: reason, local: local, cloud: cloud, conflicts: conflicts || [] });
+    while (arr.length > 3) arr.shift();
+    while (arr.length && !lsSet(P.snaps + uid, JSON.stringify(arr))) arr.shift();
+  }
+
+  // ---------- device copy ----------
+  function isDirty(uid) { return !!uid && lsGet(P.dirty + uid) === '1'; }
+  function hasLocal(uid) { return !!uid && lsGet(P.cache + uid) !== null; }
+  function persist(uid, db) {
+    var s = JSON.stringify(db);
+    var ok = lsSet(P.cache + uid, s);
+    lsSet(P.dirty + uid, '1');
+    lsSet('carpv3_backup', s);   // legacy backup key kept
+    if (!ok && H) H.bar('⚠️ Device storage full - export a backup now', 'err');
+    updateBadge();
+    return ok;
+  }
+  function markClean(uid, db) {
+    var s = JSON.stringify(db);
+    lsSet(P.cache + uid, s);
+    lsSet(P.base + uid, canon(db));   // canonical form of what the cloud holds
+    lsDel(P.dirty + uid);
+  }
+
+  function updateBadge() {
+    var el = document.getElementById('net-badge'); if (!el) return;
+    var uid = H && H.getUser ? H.getUser() : null, msg = '', cls = '';
+    if (uid) {
+      if (state.blocked) { msg = '⚠️ Data not loaded - reconnect, then reopen the app'; cls = 'err'; }
+      else if (navigator.onLine === false) { msg = isDirty(uid) ? '📴 Offline - changes saved on this device' : '📴 Offline - using saved copy'; cls = 'off'; }
+      else if (isDirty(uid)) { msg = '⟳ Waiting to sync'; cls = 'wait'; }
+    }
+    el.textContent = msg; el.className = cls; el.style.display = msg ? 'block' : 'none';
+  }
+
+  function applyDB(db) { H.setDB(normalize(db)); }
+
+  // ---------- startup load ----------
+  async function boot(uid) {
+    var local = parse(lsGet(P.cache + uid)), dirty = isDirty(uid);
+    var res = await H.load(uid);
+    state.blocked = false;
+    if (res.status === 'ok') {
+      var cloud = normalize(res.data);
+      if (local && count(cloud) === 0 && count(local) > 0) {
+        // cloud looks empty but this device has data: keep device data and re-upload it
+        snapshot(uid, 'cloud-empty', local, cloud);
+        lsDel(P.base + uid);   // forget the old cloud state so the merge treats every device record as new
+        applyDB(local); lsSet(P.dirty + uid, '1'); state.cloudReady = true;
+        setTimeout(function () { syncNow('boot', true); }, 400);
+        return 'online';
+      }
+      if (local && dirty) {
+        var base = parse(lsGet(P.base + uid));
+        var r = merge(base, normalize(local), cloud);
+        snapshot(uid, 'boot-merge', local, cloud, r.conflicts);
+        applyDB(r.merged); lsSet(P.cache + uid, JSON.stringify(r.merged)); lsSet(P.dirty + uid, '1');
+        state.cloudReady = true;
+        setTimeout(function () { syncNow('boot', true); }, 400);
+        return 'online';
+      }
+      applyDB(cloud); markClean(uid, cloud); state.cloudReady = true;
+      return 'online';
+    }
+    if (res.status === 'empty') {
+      state.cloudReady = true;
+      if (local) { lsDel(P.base + uid); applyDB(local); lsSet(P.dirty + uid, '1'); setTimeout(function () { syncNow('boot', true); }, 400); }
+      return 'online';
+    }
+    // could not reach the cloud
+    if (local) { applyDB(local); state.cloudReady = false; return 'offline'; }
+    state.blocked = true; state.cloudReady = false;
+    return 'blocked';
+  }
+
+  function canSave() { return state.cloudReady || (!!H && hasLocal(H.getUser()) && !state.blocked); }
+
+  // ---------- sync (device <-> cloud) ----------
+  async function syncNow(reason, quiet) {
+    if (!H) return;
+    var uid = H.getUser(); if (!uid || !canSave()) return;
+    if (syncing) { again = true; return; }
+    if (navigator.onLine === false) {
+      if (isDirty(uid) && !quiet) H.bar('📴 Saved on this device - will sync when you are back online', 'ok');
+      updateBadge(); return;
+    }
+    syncing = true;
+    try {
+      do {
+        again = false;
+        var dirty = isDirty(uid);
+        var res = await H.load(uid);
+        if (res.status === 'error') { if (dirty && !quiet) H.bar('⚠️ Cannot reach the cloud - changes kept on this device', 'err'); break; }
+        var local = normalize(H.getDB());
+        state.cloudReady = true;
+        var cloud = res.status === 'ok' ? normalize(res.data) : null;
+        var baseStr = lsGet(P.base + uid);
+        var cloudChanged = cloud ? (baseStr === null || canon(cloud) !== baseStr) : false;
+
+        if (!dirty && (!cloud || !cloudChanged)) break;                    // already in step
+        if (!dirty && cloudChanged) {                                      // only the cloud moved: adopt it
+          applyDB(cloud); markClean(uid, cloud); H.rerender(); break;
+        }
+        var toSave = local;
+        if (cloud && cloudChanged) {                                       // both moved: merge
+          var r = merge(parse(baseStr), local, cloud);
+          snapshot(uid, 'sync-merge', local, cloud, r.conflicts);
+          toSave = normalize(r.merged);
+        }
+        if (cloud && count(cloud) > 5 && count(toSave) === 0) {
+          snapshot(uid, 'blocked-empty-save', local, cloud);
+          H.bar('❌ Save blocked: it would erase all your data. Nothing was changed.', 'err'); break;
+        }
+        if (!quiet) H.bar('⟳ Saving...', 'ok');
+        var ok = await H.save(uid, toSave);
+        if (!ok) { try { await H.refresh(); } catch (e) {} ok = await H.save(uid, toSave); }
+        if (!ok) { if (!quiet) H.bar('❌ Save failed - changes kept on this device and will retry', 'err'); break; }
+        if (toSave !== local) { applyDB(toSave); H.rerender(); }
+        if (same(H.getDB(), toSave)) markClean(uid, toSave);
+        else { lsSet(P.base + uid, canon(toSave)); again = true; }           // edited while saving: go again
+        if (!quiet || reason === 'online') H.bar('✅ Saved', 'ok');
+      } while (again);
+    } catch (e) {
+      console.error('sync error', e);
+      if (!quiet) H.bar('❌ Sync error: ' + (e && e.message ? e.message : e), 'err');
+    } finally { syncing = false; updateBadge(); }
+  }
+
+  function init(hooks) {
+    H = hooks;
+    window.addEventListener('online', function () { updateBadge(); if (state.blocked) { location.reload(); return; } syncNow('online'); });
+    window.addEventListener('offline', updateBadge);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { updateBadge(); syncNow('visible', true); } });
+    setInterval(function () { var u = H.getUser(); if (u && isDirty(u)) syncNow('timer', true); }, 30000);
+    updateBadge();
+  }
+
+  function clearDevice(uid) { [P.cache, P.base, P.dirty, P.snaps].forEach(function (p) { lsDel(p + uid); }); }
+  function exportSnapshots() {
+    var uid = H && H.getUser(); var s = uid ? lsGet(P.snaps + uid) : null;
+    if (!s) { alert('No device snapshots saved.'); return; }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([s], { type: 'application/json' }));
+    a.download = 'fine-edge-device-snapshots.json'; a.click();
+  }
+
+  return { init: init, boot: boot, persist: persist, syncNow: syncNow, canSave: canSave, isDirty: isDirty, hasLocal: hasLocal,
+           clearDevice: clearDevice, exportSnapshots: exportSnapshots, updateBadge: updateBadge,
+           _merge: merge, _canon: canon, _count: count, _state: state };
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -44,6 +298,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;colo
 .sync-bar{position:fixed;top:0;left:0;right:0;background:var(--green);color:#fff;font-size:12px;padding:5px 14px;display:flex;align-items:center;gap:8px;z-index:8000;transform:translateY(-100%);transition:transform .3s}
 .sync-bar.on{transform:translateY(0)}
 .sync-bar.err{background:var(--red)}
+#net-badge{display:none;position:fixed;right:12px;bottom:12px;z-index:8001;font-size:11px;padding:6px 10px;border-radius:8px;background:var(--amber-light);color:var(--amber-text);border:1px solid var(--amber);max-width:80vw;pointer-events:none}
+#net-badge.err{background:var(--red-light);color:var(--red-text);border-color:var(--red)}
+#net-badge.wait{background:var(--blue-light);color:#9fcdf3;border-color:var(--blue)}
+#upd-bar{display:none;position:fixed;left:12px;bottom:12px;z-index:8001;font-size:12px;padding:8px 12px;border-radius:8px;background:var(--bg3);color:var(--text);border:1px solid var(--green)}
+#upd-bar button{margin-left:8px;background:var(--green);color:#fff;border:none;border-radius:5px;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit}
+#install-row{display:none;padding:.35rem 1.25rem}
+#install-row button{width:100%;font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid var(--green);color:var(--green-text);background:transparent;cursor:pointer;font-family:inherit}
 .user-chip{display:flex;align-items:center;gap:6px;font-size:11px;color:#666578;padding:.5rem 1.25rem;border-top:1px solid #3a3946;margin-top:.5rem}
 .user-chip button{margin-left:auto;font-size:11px;color:#f08060;background:rgba(216,90,48,.12);border:none;cursor:pointer;font-family:inherit;padding:2px 6px;border-radius:4px}
 .user-chip button:hover{background:rgba(216,90,48,.25)}
@@ -193,6 +454,8 @@ tr:hover td{background:var(--bg3)}
 
 <!-- SYNC BAR -->
 <div class="sync-bar" id="sync-bar">⟳ Saving to cloud...</div>
+<div id="net-badge"></div>
+<div id="upd-bar">A new version is ready <button id="upd-btn">Refresh</button></div>
 
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
@@ -266,6 +529,7 @@ tr:hover td{background:var(--bg3)}
   <div class="ni" data-p="balsheet">⚖️ Balance Sheet</div>
   <div class="ni" data-p="reports">📊 Reports &amp; Export</div>
   </div>
+  <div id="install-row"><button id="install-btn" type="button">📲 Install app</button></div>
   <div class="user-chip" id="user-chip">
     <span id="user-email-lbl" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <button onclick="doSignOut()">Sign out</button>
@@ -544,6 +808,17 @@ const supa = {
     if (error && error.code !== 'PGRST116') { console.error('Load error:', error); return null; }
     return data ? data.data : null;
   },
+  async loadDataSafe(userId) {
+    try {
+      const { data, error } = await _sb.from('carpentry_data').select('data').eq('user_id', userId).single();
+      if (error) {
+        if (error.code === 'PGRST116') return { status: 'empty' };
+        console.error('Load error:', error);
+        return { status: 'error', error: error };
+      }
+      return data && data.data ? { status: 'ok', data: data.data } : { status: 'empty' };
+    } catch (e) { return { status: 'error', error: e }; }
+  },
   async saveData(userId, dbData) {
     const { error } = await _sb.from('carpentry_data').upsert({ user_id: userId, data: dbData }, { onConflict: 'user_id' });
     if (error) { console.error('Save error:', error); return false; }
@@ -616,10 +891,17 @@ async function doForgot() {
 }
 
 async function doSignOut() {
+  if (currentUserId && OFF.isDirty(currentUserId)) {
+    if (!confirm('Some changes are only stored on this device and have not synced yet. Sign out anyway? They stay on this device and sync the next time you sign in.')) return;
+  } else if (currentUserId) {
+    OFF.clearDevice(currentUserId);
+  }
+  clearTimeout(saveTimer);
   await supa.signOut();
   localStorage.removeItem('sb_user_id');
   localStorage.removeItem('sb_user_email');
   currentUserId = null;
+  OFF.updateBadge();
   DB = {clients:[],projects:[],invoices:[],expenses:[],employees:[],rentPayments:[],salaryPayments:[],sharedExpenses:[],cashTransactions:[],assets:[],liabilities:[]};
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('auth-err').textContent = '';
@@ -630,11 +912,23 @@ async function doSignOut() {
 
 async function checkExistingSession() {
   // SDK automatically restores session from its own storage
-  const { data: { session } } = await _sb.auth.getSession();
+  let session = null, sessErr = null;
+  try {
+    const r = await _sb.auth.getSession();
+    session = r && r.data ? r.data.session : null;
+    sessErr = r ? r.error : null;
+  } catch(e) { sessErr = e; }
   if (session && session.user) {
     localStorage.setItem('sb_user_id', session.user.id);
     localStorage.setItem('sb_user_email', session.user.email);
     await initApp(session.user.id, session.user.email);
+    return;
+  }
+  // Offline start: the saved sign-in could not be refreshed without internet, but this device holds a copy of the data
+  const offlineNow = navigator.onLine === false || (sessErr && /fetch|network|timeout|offline/i.test(String(sessErr.message || sessErr)));
+  const uid = localStorage.getItem('sb_user_id');
+  if (offlineNow && uid && OFF.hasLocal(uid)) {
+    await initApp(uid, localStorage.getItem('sb_user_email') || '');
   }
 }
 
@@ -655,47 +949,25 @@ let DB = {clients:[],projects:[],invoices:[],expenses:[],employees:[],rentPaymen
 
 const save = () => {
   if (!currentUserId) { showSyncBar('⚠️ Not logged in', 'err'); return; }
+  if (!OFF.canSave()) { showSyncBar('⚠️ Your data has not loaded - change NOT saved. Connect to the internet and reopen the app.', 'err'); return; }
+  OFF.persist(currentUserId, DB);   // instant copy on this device
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    showSyncBar('⟳ Saving...', 'ok');
-    try {
-      const ok = await supa.saveData(currentUserId, DB);
-      if (ok) {
-        showSyncBar('✅ Saved', 'ok');
-        // Also keep local backup
-        try { localStorage.setItem('carpv3_backup', JSON.stringify(DB)); } catch(e){}
-      } else {
-        showSyncBar('❌ Save failed — check connection', 'err');
-        // Try token refresh and save again after 3s
-        setTimeout(async () => {
-          await supa.refreshToken();
-          const ok2 = await supa.saveData(currentUserId, DB);
-          showSyncBar(ok2 ? '✅ Saved (retry)' : '❌ Still failing — export backup!', ok2 ? 'ok' : 'err');
-        }, 3000);
-      }
-    } catch(e) {
-      showSyncBar('❌ Network error: ' + e.message, 'err');
-    }
-  }, 800);
+  saveTimer = setTimeout(() => OFF.syncNow('save'), 800);
 };
 
 async function initApp(userId, email) {
   currentUserId = userId;
   currentUserEmail = email;
   document.getElementById('user-email-lbl').textContent = email;
-  // Load data from Supabase
+  // Load data (cloud first, device copy if offline)
   showSyncBar('⟳ Loading data...');
-  try {
-    const cloudData = await supa.loadData(userId);
-    if (cloudData) {
-      Object.assign(DB, cloudData);
-      ['employees','rentPayments','salaryPayments','sharedExpenses','cashTransactions','assets','liabilities'].forEach(k => { if (!DB[k]) DB[k] = []; });
-    }
-  } catch(e) {
-    showSyncBar('⚠️ Could not load data', 'err');
-  }
+  let mode = 'blocked';
+  try { mode = await OFF.boot(userId); } catch(e) { console.error(e); }
   document.getElementById('auth-screen').classList.add('hidden');
-  showSyncBar('✅ Loaded');
+  if (mode === 'online') showSyncBar('✅ Loaded');
+  else if (mode === 'offline') showSyncBar('📴 Offline - showing the copy saved on this device', 'ok');
+  else showSyncBar('⚠️ Could not load your data - nothing was changed', 'err');
+  OFF.updateBadge();
   rDash();
   // Move pages into main
   const M = document.querySelector('.main');
@@ -1486,7 +1758,52 @@ window.exportFullExcel = function() {
 };
 
 // BOOT
+OFF.init({
+  getUser: () => currentUserId,
+  getDB: () => DB,
+  setDB: d => { DB = d; },
+  load: uid => supa.loadDataSafe(uid),
+  save: (uid, d) => supa.saveData(uid, d),
+  refresh: () => supa.refreshToken(),
+  bar: (m, t) => showSyncBar(m, t),
+  rerender: () => {
+    try {
+      if (document.querySelector('.mb.on')) return;   // do not disturb an open form
+      rDash();
+      const a = document.querySelector('.ni.active');
+      if (a) { const m = document.querySelector('.main'); const y = m ? m.scrollTop : 0; a.click(); if (m) m.scrollTop = y; }
+    } catch(e) { console.error(e); }
+  }
+});
 checkExistingSession();
+</script>
+<script>
+// PWA: service worker, update notice, install button
+(function () {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      var hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW register failed', e); });
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (hadController) { var b = document.getElementById('upd-bar'); if (b) b.style.display = 'block'; }
+        hadController = true;
+      });
+    });
+  }
+  var u = document.getElementById('upd-btn');
+  if (u) u.addEventListener('click', function () { location.reload(); });
+  var row = document.getElementById('install-row'), btn = document.getElementById('install-btn'), deferred = null;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (standalone || !row) return;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; row.style.display = 'block'; });
+  window.addEventListener('appinstalled', function () { row.style.display = 'none'; });
+  btn.addEventListener('click', function () {
+    if (deferred) { deferred.prompt(); deferred = null; row.style.display = 'none'; }
+    else alert('To install: tap the Share button, then "Add to Home Screen".');
+  });
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (ios) row.style.display = 'block';
+})();
 </script>
 </body>
 </html>
